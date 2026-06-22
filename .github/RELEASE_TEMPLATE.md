@@ -6,7 +6,7 @@
 
 ### Added
 - New **Home** view: a default overview that combines a limits alert, top models, a usage trend, and a 12-month activity heatmap on one screen.
-- A scrollable view switcher replaces the single cycle button, so you can jump straight to any view.
+- A new view switcher lets you jump straight to any view, alongside the existing button that cycles to the next one.
 - **Windows:** usage from running WSL distributions is now scanned and merged into your totals automatically (on by default).
 - **OpenCode multiple accounts:** add several OpenCode accounts as named profiles, each with its own rate-limit tracking. (#24)
 - Usage tracking for three more tools: **Pi, Zed, and Kilo Code**. (#25)
@@ -48,7 +48,7 @@ open-source: https://github.com/junhoyeo/tokscale
 
 ### 新增
 - 全新 **主页** 视图：将额度提醒、热门模型、用量趋势和近 12 个月的活动热力图整合到一个概览页面，并作为默认首页。
-- 用可横向滚动的视图切换器取代原本的单一循环按钮，可直接跳转到任意视图。
+- 新增视图切换菜单，可直接跳转到任意视图；原本的按钮仍可循环切换到下一个视图。
 - **Windows：** 现在会自动扫描正在运行的 WSL 发行版用量并合并进总计（默认开启）。
 - **OpenCode 多账号：** 可将多个 OpenCode 账号保存为命名设定档，每个账号都有独立的额度追踪。(#24)
 - 新增三个工具的用量追踪：**Pi、Zed 和 Kilo Code**。(#25)
