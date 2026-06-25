@@ -130,7 +130,21 @@ test('DeepSeek account panel provides a first-class API key entry', () => {
   assert.match(renderBody, /manualPanel\.classList\.toggle\('hidden', linked\)/);
   assert.match(renderBody, /openBtn\.classList\.toggle\('hidden', linked\)/);
   assert.match(renderBody, /logoutBtn\.classList\.toggle\('hidden', !linked \|\| source !== 'settings'\)/);
-  assert.match(renderBody, /refreshBtn\.classList\.toggle\('hidden', !linked\)/);
+  assert.match(renderBody, /refreshBtn\.classList\.toggle\('hidden', !configured\)/);
+});
+
+test('MiniMax API key entry shares the DeepSeek manual input styling', () => {
+  const app = readRendererFile('app.js');
+  const css = readRendererFile('styles.css');
+
+  const animationBody = functionBodyBeforeMarker(app, 'initSettingsAnimationWrappers', '\ninitSettingsAnimationWrappers();');
+  assert.match(animationBody, /'#deepseekManualPanel',\n\s*'#minimaxManualPanel'/);
+
+  assert.match(css, /#deepseekManualPanel\.hidden,\n#minimaxManualPanel\.hidden,/);
+  assert.match(css, /#deepseekErrorMessage\.hidden,\n#minimaxErrorMessage\.hidden\s*\{/);
+  assert.match(css, /#deepseekManualPanel,\n#minimaxManualPanel\s*\{\n\s*min-width: 0;/);
+  assert.match(css, /#deepseekManualPanel > \.accordion-animation-inner,\n#minimaxManualPanel > \.accordion-animation-inner\s*\{\n\s*display: grid;/);
+  assert.match(css, /#deepseekManualPanel input,\n#minimaxManualPanel input\s*\{[\s\S]*?font-family: monospace;[\s\S]*?font-size: 12px;/);
 });
 
 test('DeepSeek account linked state requires a validated API key', () => {
@@ -149,11 +163,8 @@ test('DeepSeek account linked state requires a validated API key', () => {
   assert.match(linkedBody, /provider\?\.status === 'ok'/);
 
   const renderBody = functionBody(app, 'renderDeepseekStatus', 'renderOpenCodeProfiles');
-  assert.match(
-    renderBody,
-    /if \(linked\) \{[\s\S]*settings\.deepseek\.statusSet[\s\S]*\} else if \(provider\?\.status === 'unauthorized'\) \{/,
-    'validated ok should be handled before invalid or pending states'
-  );
+  assert.match(renderBody, /const configured = Boolean\(state\.settings\?\.deepseekApiKeyConfigured\);/);
+  assert.match(renderBody, /apiKeyAccountStatusText\('deepseek', provider, configured, source\)/);
 });
 
 test('DeepSeek key changes invalidate stale provider status before re-checking', () => {
@@ -175,6 +186,33 @@ test('DeepSeek key changes invalidate stale provider status before re-checking',
   const clearBody = functionBody(app, 'clearDeepseekProviderStatus', 'renderDeepseekStatus');
   assert.match(clearBody, /state\.stats\.limits\.providers = state\.stats\.limits\.providers\.filter/);
   assert.match(clearBody, /provider\.provider !== 'deepseek'/);
+});
+
+test('MiniMax key changes invalidate stale provider status before re-checking', () => {
+  const app = readRendererFile('app.js');
+  const setupBody = functionBodyBeforeMarker(app, 'setupCursorAccountUI', '\nsetupCursorAccountUI();');
+  assert.match(setupBody, /markMinimaxKeyCheckPending\(\);[\s\S]*await saveSettings\(\{ minimaxApiKey: input\.value \}\);[\s\S]*renderMinimaxStatus\(\);[\s\S]*await refreshStats\(\{ force: true \}\);/);
+  assert.match(setupBody, /await saveSettings\(\{ minimaxApiKey: '' \}\);[\s\S]*clearMinimaxPendingCheck\(\);[\s\S]*clearMinimaxProviderStatus\(\);[\s\S]*renderMinimaxStatus\(\);/);
+
+  const linkedBody = functionBody(app, 'minimaxAccountLinked', 'apiKeyAccountStatusText');
+  assert.match(linkedBody, /minimaxProviderForAccount\(\)/);
+
+  const renderBody = functionBody(app, 'renderMinimaxStatus', 'renderDeepseekStatus');
+  assert.match(renderBody, /const provider = minimaxProviderForAccount\(\);/);
+
+  const pendingBody = functionBody(app, 'markMinimaxKeyCheckPending', 'clearMinimaxPendingCheck');
+  assert.match(pendingBody, /state\.minimaxPendingCheckSince = Date\.now\(\);/);
+  assert.match(pendingBody, /clearMinimaxProviderStatus\(\);/);
+
+  const providerBody = functionBody(app, 'minimaxProviderForAccount', 'markMinimaxKeyCheckPending');
+  assert.match(providerBody, /const pendingSince = Number\(state\.minimaxPendingCheckSince \|\| 0\);/);
+  assert.match(providerBody, /Date\.parse\(provider\.updatedAt \|\| ''\)/);
+  assert.match(providerBody, /updatedAt < pendingSince/);
+  assert.match(providerBody, /state\.minimaxPendingCheckSince = 0;/);
+
+  const clearBody = functionBody(app, 'clearMinimaxProviderStatus', 'apiKeyAccountStatusText');
+  assert.match(clearBody, /state\.stats\.limits\.providers = state\.stats\.limits\.providers\.filter/);
+  assert.match(clearBody, /provider\.provider !== 'minimax'/);
 });
 
 test('DeepSeek account copy says browser and external URL is allowlisted', () => {

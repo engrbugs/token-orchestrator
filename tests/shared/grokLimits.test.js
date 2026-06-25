@@ -6,6 +6,7 @@ const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 
+const { resolveGrokHome } = require('../../src/shared/grokLimits');
 const {
   grokCredential,
   readAuthJson,
@@ -44,6 +45,12 @@ test('grokCredential reads from explicit grokBearerToken option', () => {
   const c = grokCredential({}, { grokBearerToken: 'eyJexplicit' });
   assert.equal(c.token, 'eyJexplicit');
   assert.equal(c.source, 'settings');
+});
+
+test('resolveGrokHome uses GROK_HOME for auth.json lookup', () => {
+  const grokHome = path.join(os.tmpdir(), 'token-monitor-grok-home');
+
+  assert.equal(resolveGrokHome({ GROK_HOME: grokHome }), path.resolve(grokHome));
 });
 
 test('grokCredential returns null when nothing is configured', () => {

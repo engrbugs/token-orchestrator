@@ -40,7 +40,7 @@
     opencode: ['Local/Web', 'Manual login'],
     deepseek: ['Pay-as-you-go', 'API key'],
     minimax: ['Subscription', 'API key'],
-    grok: ['Subscription', 'Cookie/OAuth']
+    grok: ['Auto', 'CLI auth']
   };
 
   // Capability hint -> the status label it would duplicate. When that status is
@@ -143,6 +143,19 @@
       return { label: 'Not set up', tone: 'setup' };
     }
     return status ? { label: 'Error', tone: 'warn' } : null;
+  }
+
+  function apiKeyAccountStatus(provider, configured) {
+    if (!configured) return 'notConfigured';
+    const status = statusId(provider);
+    if (!status) return 'checking';
+    if (status === 'ok') return 'linked';
+    if (status === 'unauthorized') return 'invalid';
+    if (status === 'rateLimited' || status === 'sourceRateLimited') return 'limited';
+    if (status === 'unavailable') return 'unavailable';
+    if (status === 'disabled' || status === 'noSyncedData') return 'notChecked';
+    if (status === 'notConfigured') return 'notConfigured';
+    return 'error';
   }
 
   function usableProviderCandidate(provider) {
@@ -249,6 +262,7 @@
   }
 
   return {
+    apiKeyAccountStatus,
     isCodexLiveAccount,
     limitProviderCapabilityTags,
     limitProviderMainDeviceLabel,

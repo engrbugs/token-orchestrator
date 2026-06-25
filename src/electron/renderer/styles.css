@@ -2556,24 +2556,29 @@ body.floating-bubble-collapsed-right .floating-bubble-tab {
 #cursorManualPanel.hidden,
 #opencodeManualPanel.hidden,
 #deepseekManualPanel.hidden,
+#minimaxManualPanel.hidden,
 #cursorErrorMessage.hidden,
 #opencodeErrorMessage.hidden,
-#deepseekErrorMessage.hidden { display: none; }
+#deepseekErrorMessage.hidden,
+#minimaxErrorMessage.hidden { display: none; }
 #cursorManualPanel,
 #opencodeManualPanel,
-#deepseekManualPanel {
+#deepseekManualPanel,
+#minimaxManualPanel {
   min-width: 0;
 }
 #cursorManualPanel > .accordion-animation-inner,
 #opencodeManualPanel > .accordion-animation-inner,
-#deepseekManualPanel > .accordion-animation-inner {
+#deepseekManualPanel > .accordion-animation-inner,
+#minimaxManualPanel > .accordion-animation-inner {
   display: grid;
   min-width: 0;
   gap: 8px;
 }
 #cursorManualPanel textarea,
 #opencodeManualPanel textarea,
-#deepseekManualPanel input {
+#deepseekManualPanel input,
+#minimaxManualPanel input {
   width: 100%;
   font-family: monospace;
   font-size: 12px;

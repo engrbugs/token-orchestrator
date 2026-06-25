@@ -86,6 +86,7 @@ const LIMIT_SOURCE_LABELS = { oauth: 'OAuth', cli: 'CLI', web: 'Web', rpc: 'RPC'
 const LIMIT_CAPABILITY_TAG_KEYS = {
   Auto: 'settings.limits.capability.auto',
   'OAuth/CLI': 'settings.limits.capability.oauthCli',
+  'CLI auth': 'settings.limits.capability.cliAuth',
   'CLI RPC': 'settings.limits.capability.cliRpc',
   'App/CLI RPC': 'settings.limits.capability.appCliRpc',
   'Manual login': 'settings.limits.capability.manualLogin',
@@ -94,6 +95,7 @@ const LIMIT_CAPABILITY_TAG_KEYS = {
   RPC: 'settings.limits.capability.rpc',
   'Local/Zen': 'settings.limits.capability.localZen',
   'Pay-as-you-go': 'settings.limits.capability.payg',
+  Subscription: 'settings.limits.capability.subscription',
   'API key': 'settings.limits.capability.apiKey',
   'Add API key': 'settings.limits.status.addApiKey',
   'Update API key': 'settings.limits.status.updateApiKey',
@@ -105,6 +107,8 @@ const LIMIT_CAPABILITY_TAG_KEYS = {
   Stale: 'settings.limits.status.stale',
   Disabled: 'settings.limits.status.disabled',
   'Sign in again': 'settings.limits.status.signInAgain',
+  'Run grok login': 'settings.limits.status.runGrokLogin',
+  'Re-login': 'settings.limits.status.relogin',
   Limited: 'settings.limits.status.limited',
   'Usage API limited': 'settings.limits.status.usageApiLimited',
   Unavailable: 'settings.limits.status.unavailable',
@@ -158,7 +162,7 @@ function normalizeInitialViewValue(value, allowed, fallback) {
   return allowed.has(raw) ? raw : fallback;
 }
 
-const state = { period: normalizeInitialViewValue(initialViewState.period, viewPeriodValues, 'today'), appUpdate: null, breakdown: normalizeInitialViewValue(initialViewState.breakdown, viewBreakdownValues, 'home'), viewSwitcherOpen: false, settings: null, stats: null, homeHistory: null, homeHistoryBusy: false, homeHistoryRequested: false, homeActivityScrollLeft: null, homeActivityFollowEnd: true, homeActivityResizeObserver: null, serviceStatus: null, serviceStatusBusy: false, serviceProvidersExpanded: false, trendSettingsExpanded: false, homeSettingsExpanded: false, serviceStatusTicker: null, refreshTimer: null, refreshBusy: false, refreshFeedbackTimer: null, currentTotal: 0, rowSignature: '', streamConnected: false, streamFailure: null, mode: 'idle', appInfo: null, tokscaleStatus: null, tokscaleCheck: null, tokscaleBusy: false, hubInfo: null, cursorAccount: { status: null, error: '' }, cursorAccountExpanded: false, codexAccountExpanded: false, codexAccountError: '', customPricingExpanded: false, opencodeProfileCount: 0, opencodeCookieExpanded: false, deepseekAccountExpanded: false, deepseekPendingCheckSince: 0, minimaxAccountExpanded: false, grokAccountExpanded: false, floatingBubble: initialFloatingBubble, suppressInitialNumberAnimation: window.__TOKEN_MONITOR_SUPPRESS_INITIAL_NUMBER_ANIMATION__ === true, openSession: null, detailSort: 'time', recordingWindowShortcut: false, windowShortcutInvalid: false };
+const state = { period: normalizeInitialViewValue(initialViewState.period, viewPeriodValues, 'today'), appUpdate: null, breakdown: normalizeInitialViewValue(initialViewState.breakdown, viewBreakdownValues, 'home'), viewSwitcherOpen: false, settings: null, stats: null, homeHistory: null, homeHistoryBusy: false, homeHistoryRequested: false, homeActivityScrollLeft: null, homeActivityFollowEnd: true, homeActivityResizeObserver: null, serviceStatus: null, serviceStatusBusy: false, serviceProvidersExpanded: false, trendSettingsExpanded: false, homeSettingsExpanded: false, serviceStatusTicker: null, refreshTimer: null, refreshBusy: false, refreshFeedbackTimer: null, currentTotal: 0, rowSignature: '', streamConnected: false, streamFailure: null, mode: 'idle', appInfo: null, tokscaleStatus: null, tokscaleCheck: null, tokscaleBusy: false, hubInfo: null, cursorAccount: { status: null, error: '' }, cursorAccountExpanded: false, codexAccountExpanded: false, codexAccountError: '', customPricingExpanded: false, opencodeProfileCount: 0, opencodeCookieExpanded: false, deepseekAccountExpanded: false, deepseekPendingCheckSince: 0, minimaxAccountExpanded: false, minimaxPendingCheckSince: 0, floatingBubble: initialFloatingBubble, suppressInitialNumberAnimation: window.__TOKEN_MONITOR_SUPPRESS_INITIAL_NUMBER_ANIMATION__ === true, openSession: null, detailSort: 'time', recordingWindowShortcut: false, windowShortcutInvalid: false };
 state.settingsSections = Object.fromEntries(SETTINGS_SECTION_IDS.map((id) => [id, false]));
 const defaultAppearance = { glassOpacity: 68, glassBlur: 32, zoomFactor: 1, systemGlass: true, showLiveDot: true, showToolIcons: true, titleIconOnly: false, settingsInTitlebar: false };
 let preferenceDrag = null;
@@ -350,10 +354,11 @@ function settingsSectionSummary(section) {
     const cursorLinked = Boolean(state.cursorAccount.status?.loggedIn) && !state.cursorAccount.status?.expired;
     const opencodeCount = state.opencodeProfileCount || 0;
     const deepseekLinked = deepseekAccountLinked();
+    const minimaxLinked = minimaxAccountLinked();
     const codexLinked = (state.settings?.codexManagedAccounts || []).length > 0;
     return t('settings.summary.accounts', {
-      linked: (codexLinked ? 1 : 0) + (cursorLinked ? 1 : 0) + (opencodeCount > 0 ? 1 : 0) + (deepseekLinked ? 1 : 0),
-      total: 4
+      linked: (codexLinked ? 1 : 0) + (cursorLinked ? 1 : 0) + (opencodeCount > 0 ? 1 : 0) + (deepseekLinked ? 1 : 0) + (minimaxLinked ? 1 : 0),
+      total: 5
     });
   }
   if (section === 'limits') {
@@ -2422,7 +2427,6 @@ async function refreshStats(options = {}) {
     renderToolPreferences();
     renderDeepseekStatus();
     renderMinimaxStatus();
-    renderGrokStatus();
     maybeUpdateBarsIcon();
     if (feedback) settleRefreshButtonState('refreshed');
   } catch (error) {
@@ -3237,7 +3241,6 @@ function syncSettingsForm() {
   els.zoomInput.value = String(Math.round((Number(state.settings.zoomFactor) || 1) * 100));
   renderDeepseekStatus();
   renderMinimaxStatus();
-  renderGrokStatus();
   renderViewPreferences();
   renderToolPreferences();
   renderLimitProviderCheckboxes();
@@ -4419,7 +4422,6 @@ window.tokenMonitor.onStatsPush?.((payload) => {
     renderToolPreferences();
     renderDeepseekStatus();
     renderMinimaxStatus();
-    renderGrokStatus();
     maybeUpdateBarsIcon();
   }
   restartTimer();
@@ -4795,14 +4797,56 @@ function minimaxProviderStatus() {
 }
 
 function minimaxAccountLinked() {
-  return Boolean(state.settings?.minimaxApiKeyConfigured) && minimaxProviderStatus()?.status === 'ok';
+  const provider = minimaxProviderForAccount();
+  return Boolean(state.settings?.minimaxApiKeyConfigured) && provider?.status === 'ok';
+}
+
+function minimaxProviderForAccount() {
+  const provider = minimaxProviderStatus();
+  const pendingSince = Number(state.minimaxPendingCheckSince || 0);
+  if (!provider || !pendingSince) return provider;
+  const updatedAt = Date.parse(provider.updatedAt || '');
+  if (!Number.isFinite(updatedAt) || updatedAt < pendingSince) return null;
+  state.minimaxPendingCheckSince = 0;
+  return provider;
+}
+
+function markMinimaxKeyCheckPending() {
+  state.minimaxPendingCheckSince = Date.now();
+  clearMinimaxProviderStatus();
+}
+
+function clearMinimaxPendingCheck() {
+  state.minimaxPendingCheckSince = 0;
+}
+
+function clearMinimaxProviderStatus() {
+  if (!Array.isArray(state.stats?.limits?.providers)) return;
+  state.stats.limits.providers = state.stats.limits.providers.filter((provider) => provider.provider !== 'minimax');
+}
+
+function apiKeyAccountStatusText(providerName, provider, configured, source) {
+  const accountStatus = limitProviderPresentationApi.apiKeyAccountStatus(provider, configured);
+  if (accountStatus === 'linked') {
+    return t(source === 'env' ? `settings.${providerName}.statusEnv` : `settings.${providerName}.statusSet`);
+  }
+  if (accountStatus === 'invalid') return t(`settings.${providerName}.statusInvalid`);
+  if (accountStatus === 'notConfigured') return t(`settings.${providerName}.statusNotSet`);
+  const statusKeys = {
+    checking: 'settings.common.checking',
+    limited: 'settings.common.limited',
+    unavailable: 'settings.common.unavailable',
+    notChecked: 'settings.common.notChecked',
+    error: 'settings.common.error'
+  };
+  return t(statusKeys[accountStatus] || 'settings.common.error');
 }
 
 // Follow the region we last successfully polled so a global (minimax.io)
 // account lands on platform.minimax.io, not the CN landing page. Fall back
 // to the CN host until we've seen a successful poll.
 function minimaxPlatformUrl() {
-  const provider = minimaxProviderStatus();
+  const provider = minimaxProviderForAccount();
   const region = provider && provider.region === 'en' ? 'en' : 'cn';
   return region === 'en'
     ? 'https://platform.minimax.io/user-center/payment/token-plan'
@@ -4831,73 +4875,14 @@ function renderMinimaxStatus() {
   errorEl.textContent = '';
 
   const source = state.settings?.minimaxApiKeySource || '';
-  const provider = minimaxProviderStatus();
+  const provider = minimaxProviderForAccount();
+  const configured = Boolean(state.settings?.minimaxApiKeyConfigured);
   const linked = minimaxAccountLinked();
-  if (linked) {
-    setCursorStatusText(statusEl, source === 'env' ? t('settings.minimax.statusEnv') : t('settings.minimax.statusSet'));
-  } else if (provider?.status === 'unauthorized') {
-    setCursorStatusText(statusEl, t('settings.minimax.statusInvalid'));
-  } else if (state.settings?.minimaxApiKeyConfigured) {
-    setCursorStatusText(statusEl, t('settings.common.checking'));
-  } else {
-    setCursorStatusText(statusEl, t('settings.minimax.statusNotSet'));
-  }
+  setCursorStatusText(statusEl, apiKeyAccountStatusText('minimax', provider, configured, source));
   manualPanel.classList.toggle('hidden', linked);
   openBtn.classList.toggle('hidden', linked);
   logoutBtn.classList.toggle('hidden', !linked || source !== 'settings');
-  refreshBtn.classList.toggle('hidden', !linked);
-  renderSettingsSummaries();
-}
-
-function grokProviderStatus() {
-  return localProviderStatus('grok');
-}
-
-function grokAccountLinked() {
-  return Boolean(state.settings?.grokCookieConfigured) && grokProviderStatus()?.status === 'ok';
-}
-
-function setGrokAccountExpanded(expanded) {
-  const details = document.getElementById('grokSettingsDetails');
-  const toggle = document.getElementById('grokSettingsToggle');
-  if (!details || !toggle) return;
-  state.grokAccountExpanded = expanded;
-  details.classList.toggle('hidden', !expanded);
-  toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-}
-
-function renderGrokStatus() {
-  const statusEl = document.getElementById('grokCookieStatus');
-  const logoutBtn = document.getElementById('grokLogoutButton');
-  const refreshBtn = document.getElementById('grokRefreshButton');
-  const manualPanel = document.getElementById('grokManualPanel');
-  const errorEl = document.getElementById('grokErrorMessage');
-  if (!statusEl || !refreshBtn || !manualPanel || !errorEl) return;
-
-  errorEl.classList.add('hidden');
-  errorEl.textContent = '';
-
-  const source = state.settings?.grokCookieSource || '';
-  const provider = grokProviderStatus();
-  const linked = grokAccountLinked();
-  if (linked) {
-    setCursorStatusText(statusEl, source === 'env' ? t('settings.grok.statusEnv') : t('settings.grok.statusSet'));
-  } else if (provider?.status === 'unauthorized') {
-    setCursorStatusText(statusEl, t('settings.grok.statusInvalid'));
-  } else if (state.settings?.grokCookieConfigured) {
-    setCursorStatusText(statusEl, t('settings.common.checking'));
-  } else {
-    setCursorStatusText(statusEl, t('settings.grok.statusNotSet'));
-  }
-  if (logoutBtn) logoutBtn.classList.add('hidden');
-  manualPanel.classList.toggle('hidden', linked);
-  refreshBtn.classList.toggle('hidden', !linked);
-
-  const authJsonEl = document.getElementById('grokAuthJsonPath');
-  if (authJsonEl) {
-    const authPath = state.settings?.grokAuthJsonPath || '';
-    authJsonEl.textContent = authPath ? t('settings.grok.authJsonPath', { path: authPath }) : '';
-  }
+  refreshBtn.classList.toggle('hidden', !configured);
   renderSettingsSummaries();
 }
 
@@ -4915,20 +4900,13 @@ function renderDeepseekStatus() {
 
   const source = state.settings?.deepseekApiKeySource || '';
   const provider = deepseekProviderForAccount();
+  const configured = Boolean(state.settings?.deepseekApiKeyConfigured);
   const linked = deepseekAccountLinked();
-  if (linked) {
-    setCursorStatusText(statusEl, source === 'env' ? t('settings.deepseek.statusEnv') : t('settings.deepseek.statusSet'));
-  } else if (provider?.status === 'unauthorized') {
-    setCursorStatusText(statusEl, t('settings.deepseek.statusInvalid'));
-  } else if (state.settings?.deepseekApiKeyConfigured) {
-    setCursorStatusText(statusEl, t('settings.common.checking'));
-  } else {
-    setCursorStatusText(statusEl, t('settings.deepseek.statusNotSet'));
-  }
+  setCursorStatusText(statusEl, apiKeyAccountStatusText('deepseek', provider, configured, source));
   manualPanel.classList.toggle('hidden', linked);
   openBtn.classList.toggle('hidden', linked);
   logoutBtn.classList.toggle('hidden', !linked || source !== 'settings');
-  refreshBtn.classList.toggle('hidden', !linked);
+  refreshBtn.classList.toggle('hidden', !configured);
   renderSettingsSummaries();
 }
 
@@ -5560,7 +5538,7 @@ function setupCursorAccountUI() {
       }
     });
   }
-const minimaxToggle = document.getElementById('minimaxSettingsToggle');
+  const minimaxToggle = document.getElementById('minimaxSettingsToggle');
   if (minimaxToggle) {
     minimaxToggle.addEventListener('click', () => setMinimaxAccountExpanded(!state.minimaxAccountExpanded));
     setMinimaxAccountExpanded(false);
@@ -5572,6 +5550,8 @@ const minimaxToggle = document.getElementById('minimaxSettingsToggle');
 
     document.getElementById('minimaxLogoutButton').addEventListener('click', async () => {
       await saveSettings({ minimaxApiKey: '' });
+      clearMinimaxPendingCheck();
+      clearMinimaxProviderStatus();
       renderMinimaxStatus();
       await refreshStats({ force: true });
     });
@@ -5590,6 +5570,7 @@ const minimaxToggle = document.getElementById('minimaxSettingsToggle');
         return;
       }
       try {
+        markMinimaxKeyCheckPending();
         await saveSettings({ minimaxApiKey: input.value });
         input.value = '';
         renderMinimaxStatus();
@@ -5598,22 +5579,13 @@ const minimaxToggle = document.getElementById('minimaxSettingsToggle');
         else setMinimaxAccountExpanded(true);
         renderMinimaxStatus();
       } catch (err) {
+        clearMinimaxPendingCheck();
         errorEl.textContent = t('settings.minimax.saveFailed', { message: err.message });
         errorEl.classList.remove('hidden');
       }
     });
   }
 
-  const grokToggle = document.getElementById('grokSettingsToggle');
-  if (grokToggle) {
-    grokToggle.addEventListener('click', () => setGrokAccountExpanded(!state.grokAccountExpanded));
-    setGrokAccountExpanded(false);
-    renderGrokStatus();
-
-    document.getElementById('grokRefreshButton').addEventListener('click', async () => {
-      await refreshStats({ force: true });
-    });
-  }
 }
 
 function initSettingsAnimationWrappers() {
@@ -5624,20 +5596,21 @@ function initSettingsAnimationWrappers() {
     '.presence-feature-body',
     '#cursorManualPanel',
     '#opencodeManualPanel',
-    '#deepseekManualPanel'
+    '#deepseekManualPanel',
+    '#minimaxManualPanel'
   ].join(', ');
-  
+
   document.querySelectorAll(selectors).forEach(el => {
     if (el.children.length === 1 && el.firstChild.classList?.contains('accordion-animation-inner')) return;
-    
+
     const inner = document.createElement('div');
     // Keep specific class for specific paddings, but add common class for animation
-    const innerSpecificClass = el.classList.contains('cursor-settings-details') 
-      ? 'cursor-settings-details-inner' 
-      : el.classList.contains('settings-section-details') 
-        ? 'settings-section-details-inner' 
+    const innerSpecificClass = el.classList.contains('cursor-settings-details')
+      ? 'cursor-settings-details-inner'
+      : el.classList.contains('settings-section-details')
+        ? 'settings-section-details-inner'
         : 'accordion-animation-inner';
-        
+
     inner.className = `accordion-animation-inner ${innerSpecificClass}`;
     while (el.firstChild) {
       inner.appendChild(el.firstChild);

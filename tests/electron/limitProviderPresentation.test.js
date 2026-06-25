@@ -7,6 +7,7 @@ const test = require('node:test');
 const vm = require('node:vm');
 
 const {
+  apiKeyAccountStatus,
   isCodexLiveAccount,
   limitProviderCapabilityTags,
   limitProviderMainDeviceLabel,
@@ -66,7 +67,41 @@ test('capability tags explain how each provider is collected in settings', () =>
   assert.deepEqual(limitProviderCapabilityTags('cursor'), ['Manual login', 'Web']);
   assert.deepEqual(limitProviderCapabilityTags('antigravity'), ['App/CLI must be open', 'RPC']);
   assert.deepEqual(limitProviderCapabilityTags('opencode'), ['Local/Web', 'Manual login']);
+  assert.deepEqual(limitProviderCapabilityTags('minimax'), ['Subscription', 'API key']);
+  assert.deepEqual(limitProviderCapabilityTags('grok'), ['Auto', 'CLI auth']);
   assert.deepEqual(limitProviderCapabilityTags('unknown'), []);
+});
+
+test('Minimax capability tags are localized in settings', () => {
+  const app = readRendererFile('app.js');
+  const i18n = readRendererFile('i18n.js');
+
+  assert.match(app, /Subscription: 'settings\.limits\.capability\.subscription'/);
+  assert.match(i18n, /'settings\.limits\.capability\.subscription': 'Subscription'/);
+  assert.match(i18n, /'settings\.limits\.capability\.subscription': '訂閱'/);
+  assert.match(i18n, /'settings\.limits\.capability\.subscription': '订阅'/);
+});
+
+test('Grok CLI auth capability tag is localized in settings', () => {
+  const app = readRendererFile('app.js');
+  const i18n = readRendererFile('i18n.js');
+
+  assert.match(app, /'CLI auth': 'settings\.limits\.capability\.cliAuth'/);
+  assert.match(i18n, /'settings\.limits\.capability\.cliAuth': 'CLI auth'/);
+  assert.match(i18n, /'settings\.limits\.capability\.cliAuth': 'CLI 認證'/);
+  assert.match(i18n, /'settings\.limits\.capability\.cliAuth': 'CLI 认证'/);
+});
+
+test('API key account status distinguishes pending checks from completed failures', () => {
+  assert.equal(apiKeyAccountStatus(null, false), 'notConfigured');
+  assert.equal(apiKeyAccountStatus(null, true), 'checking');
+  assert.equal(apiKeyAccountStatus({ status: 'ok' }, true), 'linked');
+  assert.equal(apiKeyAccountStatus({ status: 'unauthorized' }, true), 'invalid');
+  assert.equal(apiKeyAccountStatus({ status: 'rateLimited' }, true), 'limited');
+  assert.equal(apiKeyAccountStatus({ status: 'sourceRateLimited' }, true), 'limited');
+  assert.equal(apiKeyAccountStatus({ status: 'unavailable' }, true), 'unavailable');
+  assert.equal(apiKeyAccountStatus({ status: 'error' }, true), 'error');
+  assert.equal(apiKeyAccountStatus({ status: 'disabled' }, true), 'notChecked');
 });
 
 test('undetected settings tags include status and supported collection hints', () => {
@@ -87,6 +122,11 @@ test('undetected settings tags include status and supported collection hints', (
     limitProviderSettingsTags({ provider: 'cursor', status: 'notConfigured', source: 'web' })
       .map((tag) => tag.label),
     ['Sign in', 'Manual login', 'Web']
+  );
+  assert.deepEqual(
+    limitProviderSettingsTags({ provider: 'grok', status: 'notConfigured', source: 'web' })
+      .map((tag) => tag.label),
+    ['Run grok login', 'Auto', 'CLI auth']
   );
 });
 
@@ -314,19 +354,21 @@ test('settings provider status waits for stats and refreshes when stats arrive',
   assert.doesNotMatch(renderSettings, /state\.stats \? missingLimitProviderStatus\(\) : 'unavailable'/);
   assert.match(refreshStats, /renderLimitProviderCheckboxes\(\);/);
   assert.match(statsPush, /renderLimitProviderCheckboxes\(\);/);
-  // DeepSeek/Minimax/Grok account cards all read state.stats, so every path that
-  // refreshes stats must re-render all three — otherwise a card renders once at
-  // startup and never updates again. Settings pushes route through syncSettingsForm
-  // (which init() also calls), so the three cards are re-rendered there and
+  // DeepSeek/Minimax account cards read state.stats, so every path that refreshes
+  // stats must re-render both. Grok is automatic and belongs only to the generic
+  // provider list, so it must not retain a separate account-card renderer.
+  // Settings pushes route through syncSettingsForm (which init() also calls), so
+  // the two cards are re-rendered there and
   // onSettingsPush itself does not duplicate the calls.
-  for (const fn of ['renderDeepseekStatus', 'renderMinimaxStatus', 'renderGrokStatus']) {
+  for (const fn of ['renderDeepseekStatus', 'renderMinimaxStatus']) {
     assert.match(refreshStats, new RegExp(`${fn}\\(\\);`), `${fn} missing from refreshStats`);
     assert.match(statsPush, new RegExp(`${fn}\\(\\);`), `${fn} missing from onStatsPush`);
     assert.match(syncSettings, new RegExp(`${fn}\\(\\);`), `${fn} missing from syncSettingsForm`);
   }
-  for (const fn of ['renderDeepseekStatus', 'renderMinimaxStatus', 'renderGrokStatus']) {
+  for (const fn of ['renderDeepseekStatus', 'renderMinimaxStatus']) {
     assert.doesNotMatch(settingsPush, new RegExp(`${fn}\\(\\);`), `${fn} should not be duplicated in onSettingsPush (syncSettingsForm covers it)`);
   }
+  assert.doesNotMatch(app, /renderGrokStatus|grokAccountLinked|grokAccountExpanded/);
 });
 
 test('account validation reads the local device raw limits, not the collapsed aggregate', () => {
@@ -352,21 +394,53 @@ test('account validation reads the local device raw limits, not the collapsed ag
   assert.match(helper, /state\.stats\?\.limits\?\.providers/);
   assert.match(functionBody(app, 'deepseekProviderStatus', 'deepseekProviderForAccount'), /return localProviderStatus\('deepseek'\);/);
   assert.match(functionBody(app, 'minimaxProviderStatus', 'minimaxAccountLinked'), /return localProviderStatus\('minimax'\);/);
-  assert.match(functionBody(app, 'grokProviderStatus', 'grokAccountLinked'), /return localProviderStatus\('grok'\);/);
 });
 
 test('account validation does not treat a sole remote synced device as local', () => {
   const app = readRendererFile('app.js');
-  const remoteOk = { provider: 'grok', status: 'ok', sourceDeviceId: 'office-pc' };
+  const remoteOk = { provider: 'deepseek', status: 'ok', sourceDeviceId: 'office-pc' };
   const provider = runLocalProviderStatus(app, {
-    settings: { deviceId: 'this-mac', grokCookieConfigured: true },
+    settings: { deviceId: 'this-mac', deepseekApiKeyConfigured: true },
     stats: {
       devices: [{ deviceId: 'office-pc', limits: { providers: [remoteOk] } }],
       limits: { providers: [remoteOk] }
     }
-  }, 'grok');
+  }, 'deepseek');
 
   assert.equal(provider, null);
+});
+
+test('Grok is automatic provider UI, while env token remains documented for headless use', () => {
+  const html = readRendererFile('index.html');
+  const app = readRendererFile('app.js');
+  const i18n = readRendererFile('i18n.js');
+  const main = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'electron', 'main.js'), 'utf8');
+  const envExample = fs.readFileSync(path.join(__dirname, '..', '..', '.env.example'), 'utf8');
+  const grokLimits = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'shared', 'grokLimits.js'), 'utf8');
+  const rendererSettings = main.slice(
+    main.indexOf('function settingsForRenderer'),
+    main.indexOf('function pushSettingsToRenderer')
+  );
+
+  assert.doesNotMatch(html, /grokAccountGroup|grokSettingsToggle|settings\.grok\./);
+  assert.doesNotMatch(app, /grokAccountExpanded|renderGrokStatus|grokAccountLinked|grokCookieConfigured/);
+  assert.doesNotMatch(rendererSettings, /grokCookieConfigured|grokCookieSource|grokAuthJsonPath/);
+  assert.match(envExample, /GROK_BEARER_TOKEN=/);
+  assert.match(grokLimits, /GROK_BEARER_TOKEN/);
+  assert.match(app, /'Run grok login': 'settings\.limits\.status\.runGrokLogin'/);
+  assert.match(app, /'Re-login': 'settings\.limits\.status\.relogin'/);
+  assert.match(i18n, /'settings\.limits\.status\.runGrokLogin': 'Run grok login'/);
+  assert.match(i18n, /'settings\.limits\.status\.runGrokLogin': '執行 grok login'/);
+  assert.match(i18n, /'settings\.limits\.status\.runGrokLogin': '运行 grok login'/);
+});
+
+test('Accounts summary counts MiniMax as the fifth managed account group', () => {
+  const app = readRendererFile('app.js');
+  const summaryBody = functionBody(app, 'settingsSectionSummary', 'renderSettingsSummaries');
+
+  assert.match(summaryBody, /const minimaxLinked = minimaxAccountLinked\(\);/);
+  assert.match(summaryBody, /\(minimaxLinked \? 1 : 0\)/);
+  assert.match(summaryBody, /total: 5/);
 });
 
 test('account validation does not use a remote aggregate when the local device lacks the provider', () => {

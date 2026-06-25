@@ -13,8 +13,6 @@ const { customPricingPath } = require('../shared/tokscaleConfig');
 const { applyCustomPricing, normalizeCustomPricingSetting } = require('../shared/tokscaleCustomPricing');
 const { createHub } = require('../hub/server');
 const { deepseekToken, normalizeLimitsRefreshMs, parseBoolean, parseLimitProviders, runCodexLogin, minimaxToken } = require('../shared/limitCollector');
-const grokLimits = require('../shared/grokLimits');
-const { grokCredential } = grokLimits;
 const { codexAuthIdentity, hashAccountKey } = require('../shared/codexAuth');
 const {
   normalizeClientDisplayOrder,
@@ -223,12 +221,6 @@ function normalizeMinimaxApiKey(value) {
 
 function currentMinimaxApiKey() {
   return settings?.minimaxApiKey || minimaxToken(process.env);
-}
-
-function currentGrokCredential() {
-  // grokCredential already falls back to ~/.grok/auth.json when no env var is
-  // set, so this is a one-liner.
-  return grokCredential(process.env);
 }
 
 let codexLoginInFlight = false;
@@ -1543,9 +1535,6 @@ function settingsForRenderer() {
     : minimaxToken(process.env)
       ? 'env'
       : '';
-  const grokCredential_ = currentGrokCredential();
-  const grokCookieSource = grokCredential_ ? grokCredential_.source : '';
-  const grokAuthJsonPath = grokCredential_ && grokCredential_.path ? grokCredential_.path : '';
   return {
     ...settings,
     deepseekApiKey: '',
@@ -1561,9 +1550,6 @@ function settingsForRenderer() {
     deepseekApiKeySource,
     minimaxApiKeyConfigured: Boolean(currentMinimaxApiKey()),
     minimaxApiKeySource,
-    grokCookieConfigured: Boolean(grokCredential_),
-    grokCookieSource,
-    grokAuthJsonPath,
     currencyRatesEffective: effectiveRates || resolveEffectiveRates(rateCache?.rates || {}, settings?.currencyRates || {}),
     currencyRateInfo: rateCache ? { source: rateCache.source, date: rateCache.date, fetchedAt: rateCache.fetchedAt } : null,
     windowToggleShortcutStatus: currentWindowToggleShortcutStatus()

@@ -6,8 +6,8 @@
 // Auth: Bearer token from ~/.grok/auth.json (written by `grok login`) or
 //       GROK_BEARER_TOKEN env var.
 //
-// Field shape and auth pattern mirror TokenTracker's grok-limits.js (same
-// endpoint, same `config: { monthlyLimit, used, billingPeriodEnd }` envelope).
+// Field shape follows the billing endpoint's
+// `config: { monthlyLimit, used, billingPeriodEnd }` envelope.
 
 const fs = require('node:fs');
 const os = require('node:os');
@@ -21,9 +21,6 @@ const GROK_OIDC_PREFIX = 'https://auth.x.ai::';
 const GROK_LEGACY_SCOPE = 'https://accounts.x.ai/sign-in';
 
 function resolveGrokHome(env = process.env) {
-  if (typeof env.TOKENTRACKER_GROK_HOME === 'string' && env.TOKENTRACKER_GROK_HOME.trim()) {
-    return path.resolve(env.TOKENTRACKER_GROK_HOME.trim());
-  }
   if (typeof env.GROK_HOME === 'string' && env.GROK_HOME.trim()) {
     return path.resolve(env.GROK_HOME.trim());
   }
@@ -125,8 +122,8 @@ function buildWindow(label, used, limit, resetsAt) {
 // Parse the JSON body returned by GET /v1/billing into the single monthly
 // quota window. The API also returns on-demand usage, but token-monitor's
 // "Session / Weekly" UI model doesn't have a clean place for an auxiliary
-// "On-demand" meter alongside "Monthly", so we drop it. TokenTracker's
-// dashboard renders both; ours collapses to the primary subscription.
+// "On-demand" meter alongside "Monthly", so ours collapses to the primary
+// subscription window.
 function parseGrokBilling(body) {
   const config = body && body.config;
   if (!config || typeof config !== 'object') {
