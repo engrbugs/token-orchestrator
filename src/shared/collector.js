@@ -11,7 +11,7 @@ const { appVersion } = require('./appVersion');
 const { normalizeClientsCsv } = require('./clientTracking');
 const { tokscalePackageNameForPlatform, tokscalePlatformKey } = require('./tokscalePlatform');
 const { applyPeriodDelta, emptyPeriod, extractUsageFromTokscale, mergePeriods } = require('./usage');
-const { collectWslUsage: collectWslUsageImpl, emptyWslBundle } = require('./wslUsage');
+const { collectWslUsage: collectWslUsageImpl, emptyWslBundle, probeWslState: probeWslStateImpl } = require('./wslUsage');
 const { parseGraphResult, normalizeHistory } = require('./history');
 const { collectLimitsOnce, createLimitsCollector } = require('./limitCollector');
 const cursorAuth = require('./cursorAuth');
@@ -354,6 +354,11 @@ async function collectUsageOnce(options) {
   const { clients, allTimeSince, commandTimeoutMs, deviceId, agentVersion = appVersion(), agentRuntime = '' } = options;
   const runTokscaleFn = options.runTokscale || runTokscale;
   const collectWsl = options.collectWslUsage || collectWslUsageImpl;
+  const probeWslStateFn = options.probeWslState || probeWslStateImpl;
+  // Injectable only for the WSL-status gate, so tests can exercise the win32
+  // build path on a non-Windows CI box (the real process.platform stays for
+  // tokscale binary resolution, which is genuinely platform-bound).
+  const platformValue = options.platform || process.platform;
   const normalizedClients = normalizeClientsCsv(clients);
   let today = emptyPeriod();
   let month = emptyPeriod();
@@ -399,32 +404,65 @@ async function collectUsageOnce(options) {
   // 3. !anchorUsed (full scan): scan WSL as part of the complete rescan.
   const windowsPeriods = { today, month, allTime };
   let wslBundle = emptyWslBundle();
+  let wslDetected = [];
   if (normalizedClients && options.wslScanEnabled !== false) {
     if (options.refreshWsl) {
-      wslBundle = await collectWsl({
+      const wslResult = await collectWsl({
         clients: normalizedClients,
         allTimeSince,
         commandTimeoutMs,
         runTokscale: runTokscaleFn,
         logger: options.logger
       });
+      wslBundle = wslResult.bundle;
+      wslDetected = wslResult.detected;
     } else if (options.wslAnchor) {
       wslBundle = options.wslAnchor;
     } else if (!anchorUsed) {
-      wslBundle = await collectWsl({
+      const wslResult = await collectWsl({
         clients: normalizedClients,
         allTimeSince,
         commandTimeoutMs,
         runTokscale: runTokscaleFn,
         logger: options.logger
       });
+      wslBundle = wslResult.bundle;
+      wslDetected = wslResult.detected;
     }
   }
   today = mergePeriods(windowsPeriods.today, wslBundle.today);
   month = mergePeriods(windowsPeriods.month, wslBundle.month);
   allTime = mergePeriods(windowsPeriods.allTime, wslBundle.allTime);
+
+  // WSL attribution (Windows only; null elsewhere). detected = markers found,
+  // withData = tools tokscale actually returned tokens for. The gap is the
+  // diagnostic (e.g. Hermes detected but unreadable over 9P).
+  //
+  // Like wslBundle, this is FROZEN between full scans: anchored watch ticks
+  // (which skip the WSL scan) reuse the snapshot via options.wslStatus instead
+  // of re-probing — otherwise every few-second watch tick would spawn wsl.exe
+  // and stall the fast refresh path (issue #15's load concern).
+  let wslStatus = null;
+  if (platformValue === 'win32' && normalizedClients) {
+    const reuseFrozen = !options.refreshWsl && options.wslAnchor && options.wslStatus;
+    if (options.wslScanEnabled === false) {
+      wslStatus = { state: 'disabled', detected: [], withData: [] };
+    } else if (reuseFrozen) {
+      wslStatus = options.wslStatus;
+    } else {
+      const probe = probeWslStateFn({});
+      if (probe !== 'ok') {
+        wslStatus = { state: probe, detected: [], withData: [] };
+      } else {
+        const withData = Object.keys(wslBundle.allTime.clients || {});
+        const state = withData.length > 0 ? 'active' : 'no-data';
+        wslStatus = { state, detected: wslDetected, withData };
+      }
+    }
+  }
+
   if (typeof options.onAnchorComputed === 'function') {
-    options.onAnchorComputed({ windowsPeriods, wslBundle });
+    options.onAnchorComputed({ windowsPeriods, wslBundle, wslStatus });
   }
 
   const summary = {
@@ -436,6 +474,7 @@ async function collectUsageOnce(options) {
     ...(agentRuntime ? { agentRuntime } : {}),
     trackedClients: normalizedClients ? normalizedClients.split(',') : [],
     clientStatus: deriveClientStatus(normalizedClients, allTime),
+    wslStatus,
     today,
     month,
     allTime
@@ -602,6 +641,7 @@ function startCollector(options) {
   // between full ticks (WSL is not scanned on watch ticks).
   let anchor = null;
   let wslAnchor = null;
+  let wslStatusAnchor = null;
   let lastFullScanAt = 0;
   let pendingWaiters = [];
   let debounceTimer = null;
@@ -625,6 +665,7 @@ function startCollector(options) {
         // stay valid), so without this gate a warm-scan preview would briefly
         // re-merge the old WSL totals before the first full tick clears them.
         wslAnchor = options.wslScanEnabled !== false ? (saved.wslBundle || null) : null;
+        wslStatusAnchor = options.wslScanEnabled !== false ? (saved.wslStatus || null) : null;
         if (saved.fullScanAt) {
           const parsed = Date.parse(saved.fullScanAt);
           // Only trust timestamps that are valid and not in the future.
@@ -665,6 +706,7 @@ function startCollector(options) {
         forceLimits: Boolean(tickOptions.forceLimits),
         todayOnlyAnchor: anchored ? anchor : null,
         wslAnchor: anchored ? wslAnchor : null,
+        wslStatus: anchored ? wslStatusAnchor : null,
         refreshWsl: anchored ? refreshWsl : false,
         onAnchorComputed: (x) => { captured = x; },
         onProgress: (partial) => {
@@ -715,6 +757,7 @@ function startCollector(options) {
       if (!anchored && captured) {
         anchor = { dateKey: todayKey, today: captured.windowsPeriods.today, month: captured.windowsPeriods.month, allTime: captured.windowsPeriods.allTime };
         wslAnchor = captured.wslBundle;
+        wslStatusAnchor = captured.wslStatus || null;
         lastFullScanAt = Date.now();
         try {
           fs.mkdirSync(path.dirname(anchorPath), { recursive: true });
@@ -724,6 +767,7 @@ function startCollector(options) {
             month: anchor.month,
             allTime: anchor.allTime,
             wslBundle: wslAnchor,
+            wslStatus: wslStatusAnchor,
             configFingerprint: configFingerprint(clients, allTimeSince),
             fullScanAt: new Date().toISOString()
           }));
@@ -732,6 +776,7 @@ function startCollector(options) {
         // Interval anchored ticks refresh WSL independently; update the
         // frozen snapshot so subsequent watch ticks see the fresh data.
         wslAnchor = captured.wslBundle;
+        wslStatusAnchor = captured.wslStatus || null;
       }
       await onUpdate?.(summary, reason);
     } catch (error) {

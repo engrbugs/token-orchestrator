@@ -373,6 +373,15 @@ body.floating-bubble-collapsed-right .floating-bubble-tab {
 }
 .settings-group { display: grid; min-width: 0; gap: 8px; }
 .settings-group.hidden, .settings-subgroup.hidden, .settings-actions button.hidden { display: none; }
+.settings-wsl-block { display: grid; gap: 6px; min-width: 0; }
+.settings-wsl-block.hidden { display: none; }
+.settings-wsl-block .wsl-scan-toggle { justify-content: flex-start; gap: 8px; }
+.wsl-panel { display: grid; gap: 4px; margin-top: 4px; }
+.wsl-panel:empty { display: none; }
+.wsl-panel-header, .wsl-panel-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.wsl-panel-title { font-size: 11px; color: var(--muted); }
+.wsl-panel-name { font-size: 11px; }
+.wsl-panel-row { padding-left: 10px; }
 .settings-group-header { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 11px; }
 .settings-group-header span:last-child:not(:first-child) { font-size: 9px; opacity: 0.72; }
 .settings-collapsible-group {

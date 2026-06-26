@@ -25,7 +25,7 @@ test('full tick merges WSL bundle and marks WSL-only client active', async () =>
     deviceId: 'dev1',
     limitsEnabled: false,
     runTokscale: windowsTokscale,
-    collectWslUsage: async () => bundleWith(9),
+    collectWslUsage: async () => ({ bundle: bundleWith(9), detected: ['gemini'] }),
     onAnchorComputed: (x) => { anchorCaptured = x; }
   });
   // merged totals: windows 20 + wsl 9
@@ -50,7 +50,7 @@ test('watch tick reuses wslAnchor and does not rescan WSL', async () => {
     runTokscale: windowsTokscale,
     todayOnlyAnchor: anchor,
     wslAnchor: bundleWith(9),
-    collectWslUsage: async () => { wslCalls += 1; return bundleWith(0); }
+    collectWslUsage: async () => { wslCalls += 1; return { bundle: bundleWith(0), detected: [] }; }
   });
   assert.equal(wslCalls, 0); // reused, not rescanned
   assert.equal(summary.today.clients.gemini, 9); // frozen WSL contribution present
@@ -78,7 +78,7 @@ test('interval anchored tick with refreshWsl rescans WSL and updates anchor', as
       wslCalls += 1;
       const b = useSecond ? secondBundle : firstBundle;
       useSecond = true;
-      return b;
+      return { bundle: b, detected: ['gemini'] };
     },
     onAnchorComputed: (x) => { capturedWsl = x.wslBundle; }
   });
@@ -103,7 +103,7 @@ test('interval anchored tick with refreshWsl rescans WSL and updates anchor', as
     runTokscale: windowsTokscale,
     todayOnlyAnchor: anchor,
     wslAnchor: capturedWsl,        // updated anchor from the interval refresh
-    collectWslUsage: async () => { wslCalls += 1; return bundleWith(0); }
+    collectWslUsage: async () => { wslCalls += 1; return { bundle: bundleWith(0), detected: [] }; }
   });
   assert.equal(wslCalls, 0, 'watch tick must reuse wslAnchor, not rescan');
 });
@@ -118,10 +118,113 @@ test('wslScanEnabled:false skips the WSL scan entirely', async () => {
     limitsEnabled: false,
     wslScanEnabled: false,
     runTokscale: windowsTokscale,
-    collectWslUsage: async () => { wslCalls += 1; return bundleWith(9); }
+    collectWslUsage: async () => { wslCalls += 1; return { bundle: bundleWith(9), detected: ['gemini'] }; }
   });
   assert.equal(wslCalls, 0); // WSL scan never invoked
   assert.equal(summary.today.totalTokens, 20); // windows-only, no WSL contribution
   assert.deepEqual(summary.today.clients, { claude: 20 }); // gemini (WSL-only) absent
   assert.notEqual(summary.clientStatus.gemini, 'active'); // not active without WSL usage
+});
+
+test('wslStatus active lists detected and withData when WSL has usage', async () => {
+  const summary = await collectUsageOnce({
+    clients: 'claude,gemini',
+    allTimeSince: '2025-01-01',
+    commandTimeoutMs: 1000,
+    deviceId: 'dev1',
+    limitsEnabled: false,
+    platform: 'win32',
+    runTokscale: windowsTokscale,
+    collectWslUsage: async () => ({ bundle: bundleWith(9), detected: ['gemini'] }),
+    probeWslState: () => 'ok'
+  });
+  assert.equal(summary.wslStatus.state, 'active');
+  assert.deepEqual(summary.wslStatus.detected, ['gemini']);
+  assert.deepEqual(summary.wslStatus.withData, ['gemini']);
+});
+
+test('wslStatus is null on non-Windows platforms', async () => {
+  const summary = await collectUsageOnce({
+    clients: 'claude,gemini',
+    allTimeSince: '2025-01-01',
+    commandTimeoutMs: 1000,
+    deviceId: 'dev1',
+    limitsEnabled: false,
+    platform: 'darwin',
+    runTokscale: windowsTokscale,
+    collectWslUsage: async () => ({ bundle: bundleWith(9), detected: ['gemini'] }),
+    probeWslState: () => 'ok'
+  });
+  assert.equal(summary.wslStatus, null);
+});
+
+test('wslStatus is not-installed when WSL is absent (still a non-null panel state)', async () => {
+  const summary = await collectUsageOnce({
+    clients: 'claude',
+    allTimeSince: '2025-01-01',
+    commandTimeoutMs: 1000,
+    deviceId: 'dev1',
+    limitsEnabled: false,
+    platform: 'win32',
+    runTokscale: windowsTokscale,
+    collectWslUsage: async () => ({ bundle: bundleWith(0), detected: [] }),
+    probeWslState: () => 'not-installed'
+  });
+  assert.deepEqual(summary.wslStatus, { state: 'not-installed', detected: [], withData: [] });
+});
+
+test('watch tick preserves wslStatus.detected from the frozen anchor', async () => {
+  const summary = await collectUsageOnce({
+    clients: 'claude,gemini',
+    allTimeSince: '2025-01-01',
+    commandTimeoutMs: 1000,
+    deviceId: 'dev1',
+    limitsEnabled: false,
+    runTokscale: windowsTokscale,
+    platform: 'win32',
+    todayOnlyAnchor: { dateKey: localTodayKey(), today: emptyPeriod(), month: emptyPeriod(), allTime: emptyPeriod() },
+    wslAnchor: bundleWith(9),
+    wslStatus: { state: 'active', detected: ['gemini'], withData: ['gemini'] }, // frozen from the last full scan
+    collectWslUsage: async () => ({ bundle: bundleWith(0), detected: [] }),
+    probeWslState: () => 'ok'
+  });
+  assert.deepEqual(summary.wslStatus.detected, ['gemini']); // not [] despite frozen tick
+});
+
+test('anchored watch tick reuses frozen wslStatus without re-probing', async () => {
+  let probes = 0;
+  const frozen = { state: 'no-data', detected: ['hermes'], withData: [] };
+  const summary = await collectUsageOnce({
+    clients: 'claude,gemini',
+    allTimeSince: '2025-01-01',
+    commandTimeoutMs: 1000,
+    deviceId: 'dev1',
+    limitsEnabled: false,
+    runTokscale: windowsTokscale,
+    platform: 'win32',
+    todayOnlyAnchor: { dateKey: localTodayKey(), today: emptyPeriod(), month: emptyPeriod(), allTime: emptyPeriod() },
+    wslAnchor: bundleWith(9),
+    wslStatus: frozen,                // frozen snapshot from the last full scan
+    collectWslUsage: async () => ({ bundle: bundleWith(0), detected: [] }),
+    probeWslState: () => { probes += 1; return 'ok'; }
+  });
+  assert.equal(probes, 0, 'anchored watch tick must NOT spawn the WSL readiness probe');
+  assert.deepEqual(summary.wslStatus, frozen); // reused verbatim, not recomputed
+});
+
+test('wslStatus disabled when wslScanEnabled is false (no scan run)', async () => {
+  let called = 0;
+  const summary = await collectUsageOnce({
+    clients: 'claude',
+    allTimeSince: '2025-01-01',
+    commandTimeoutMs: 1000,
+    deviceId: 'dev1',
+    limitsEnabled: false,
+    wslScanEnabled: false,
+    platform: 'win32',
+    runTokscale: windowsTokscale,
+    collectWslUsage: async () => { called += 1; return { bundle: bundleWith(9), detected: ['gemini'] }; }
+  });
+  assert.equal(called, 0);
+  assert.deepEqual(summary.wslStatus, { state: 'disabled', detected: [], withData: [] });
 });

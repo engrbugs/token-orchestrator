@@ -176,7 +176,7 @@ let viewSwitcherLongPressTimer = null;
 let viewSwitcherLongPressTriggered = false;
 let viewSwitcherHoverCloseTimer = null;
 const els = {
-  shell: document.querySelector('.shell'), status: document.getElementById('status'), liveDot: document.getElementById('liveDot'), totalTokens: document.getElementById('totalTokens'), cost: document.getElementById('cost'), homePanel: document.getElementById('homePanel'), breakdown: document.getElementById('breakdown'), serviceStatusPanel: document.getElementById('serviceStatusPanel'), limitsPanel: document.getElementById('limitsPanel'), trendsPanel: document.getElementById('trendsPanel'), viewSwitcher: document.getElementById('viewSwitcher'), pinButton: document.getElementById('pinButton'), settingsButton: document.getElementById('settingsButton'), settingsPanel: document.getElementById('settingsPanel'), languageInput: document.getElementById('languageInput'), currencyInput: document.getElementById('currencyInput'), currencyRateRow: document.getElementById('currencyRateRow'), currencyRateModeAuto: document.getElementById('currencyRateModeAuto'), currencyRateModeManual: document.getElementById('currencyRateModeManual'), currencyRateManualField: document.getElementById('currencyRateManualField'), currencyRateOverrideInput: document.getElementById('currencyRateOverrideInput'), currencyRateStatus: document.getElementById('currencyRateStatus'), hubUrlInput: document.getElementById('hubUrlInput'), secretInput: document.getElementById('secretInput'), deviceIdInput: document.getElementById('deviceIdInput'), limitProviderCheckboxes: document.getElementById('limitProviderCheckboxes'), limitsRefreshInput: document.getElementById('limitsRefreshInput'), showLimitSourceInput: document.getElementById('showLimitSourceInput'), showActiveAccountInput: document.getElementById('showActiveAccountInput'), systemGlassInput: document.getElementById('systemGlassInput'), liveDotInput: document.getElementById('liveDotInput'), toolIconsInput: document.getElementById('toolIconsInput'), floatingBubbleInput: document.getElementById('floatingBubbleInput'), floatingBubbleTriggerInput: document.getElementById('floatingBubbleTriggerInput'), floatingBubbleTriggerRow: document.getElementById('floatingBubbleTriggerRow'), floatingBubbleContentInput: document.getElementById('floatingBubbleContentInput'), floatingBubbleContentRow: document.getElementById('floatingBubbleContentRow'), floatingBubbleContent: document.getElementById('floatingBubbleContent'), discordRpcInput: document.getElementById('discordRpcInput'), windowBehaviorInput: document.getElementById('windowBehaviorInput'), showTrayIconInput: document.getElementById('showTrayIconInput'), trayModeInput: document.getElementById('trayModeInput'), trayContentInput: document.getElementById('trayContentInput'), windowToggleShortcutValue: document.getElementById('windowToggleShortcutValue'), windowToggleShortcutRecordButton: document.getElementById('windowToggleShortcutRecordButton'), windowToggleShortcutClearButton: document.getElementById('windowToggleShortcutClearButton'), windowToggleShortcutNote: document.getElementById('windowToggleShortcutNote'), glassInput: document.getElementById('glassInput'), blurInput: document.getElementById('blurInput'), zoomInput: document.getElementById('zoomInput'), resetGlassButton: document.getElementById('resetGlassButton'), resetDepthButton: document.getElementById('resetDepthButton'), resetZoomButton: document.getElementById('resetZoomButton'), saveSettingsButton: document.getElementById('saveSettingsButton'), clientDisplayList: document.getElementById('clientDisplayList'), wslScanInput: document.getElementById('wslScanInput'), wslScanRow: document.getElementById('wslScanRow'), openConfigButton: document.getElementById('openConfigButton'), refreshButton: document.getElementById('refreshButton'), minButton: document.getElementById('minButton'), closeButton: document.getElementById('closeButton'), floatingBubbleTab: document.getElementById('floatingBubbleTab')
+  shell: document.querySelector('.shell'), status: document.getElementById('status'), liveDot: document.getElementById('liveDot'), totalTokens: document.getElementById('totalTokens'), cost: document.getElementById('cost'), homePanel: document.getElementById('homePanel'), breakdown: document.getElementById('breakdown'), serviceStatusPanel: document.getElementById('serviceStatusPanel'), limitsPanel: document.getElementById('limitsPanel'), trendsPanel: document.getElementById('trendsPanel'), viewSwitcher: document.getElementById('viewSwitcher'), pinButton: document.getElementById('pinButton'), settingsButton: document.getElementById('settingsButton'), settingsPanel: document.getElementById('settingsPanel'), languageInput: document.getElementById('languageInput'), currencyInput: document.getElementById('currencyInput'), currencyRateRow: document.getElementById('currencyRateRow'), currencyRateModeAuto: document.getElementById('currencyRateModeAuto'), currencyRateModeManual: document.getElementById('currencyRateModeManual'), currencyRateManualField: document.getElementById('currencyRateManualField'), currencyRateOverrideInput: document.getElementById('currencyRateOverrideInput'), currencyRateStatus: document.getElementById('currencyRateStatus'), hubUrlInput: document.getElementById('hubUrlInput'), secretInput: document.getElementById('secretInput'), deviceIdInput: document.getElementById('deviceIdInput'), limitProviderCheckboxes: document.getElementById('limitProviderCheckboxes'), limitsRefreshInput: document.getElementById('limitsRefreshInput'), showLimitSourceInput: document.getElementById('showLimitSourceInput'), showActiveAccountInput: document.getElementById('showActiveAccountInput'), systemGlassInput: document.getElementById('systemGlassInput'), liveDotInput: document.getElementById('liveDotInput'), toolIconsInput: document.getElementById('toolIconsInput'), floatingBubbleInput: document.getElementById('floatingBubbleInput'), floatingBubbleTriggerInput: document.getElementById('floatingBubbleTriggerInput'), floatingBubbleTriggerRow: document.getElementById('floatingBubbleTriggerRow'), floatingBubbleContentInput: document.getElementById('floatingBubbleContentInput'), floatingBubbleContentRow: document.getElementById('floatingBubbleContentRow'), floatingBubbleContent: document.getElementById('floatingBubbleContent'), discordRpcInput: document.getElementById('discordRpcInput'), windowBehaviorInput: document.getElementById('windowBehaviorInput'), showTrayIconInput: document.getElementById('showTrayIconInput'), trayModeInput: document.getElementById('trayModeInput'), trayContentInput: document.getElementById('trayContentInput'), windowToggleShortcutValue: document.getElementById('windowToggleShortcutValue'), windowToggleShortcutRecordButton: document.getElementById('windowToggleShortcutRecordButton'), windowToggleShortcutClearButton: document.getElementById('windowToggleShortcutClearButton'), windowToggleShortcutNote: document.getElementById('windowToggleShortcutNote'), glassInput: document.getElementById('glassInput'), blurInput: document.getElementById('blurInput'), zoomInput: document.getElementById('zoomInput'), resetGlassButton: document.getElementById('resetGlassButton'), resetDepthButton: document.getElementById('resetDepthButton'), resetZoomButton: document.getElementById('resetZoomButton'), saveSettingsButton: document.getElementById('saveSettingsButton'), clientDisplayList: document.getElementById('clientDisplayList'), wslScanInput: document.getElementById('wslScanInput'), wslScanRow: document.getElementById('wslScanRow'), wslPanel: document.getElementById('wslPanel'), openConfigButton: document.getElementById('openConfigButton'), refreshButton: document.getElementById('refreshButton'), minButton: document.getElementById('minButton'), closeButton: document.getElementById('closeButton'), floatingBubbleTab: document.getElementById('floatingBubbleTab')
 };
 Object.assign(els, {
   floatingBubbleOptions: document.getElementById('floatingBubbleOptions'),
@@ -2444,6 +2444,7 @@ async function refreshStats(options = {}) {
     render();
     renderLimitProviderCheckboxes();
     renderToolPreferences();
+    renderWslPanel();
     renderDeepseekStatus();
     renderMinimaxStatus();
     renderCopilotStatus();
@@ -3228,7 +3229,7 @@ function syncSettingsForm() {
   els.showLimitSourceInput.checked = Boolean(state.settings.showLimitSource);
   els.showActiveAccountInput.checked = Boolean(state.settings.showActiveAccount);
   if (els.wslScanInput) els.wslScanInput.checked = state.settings.wslScanEnabled !== false;
-  if (els.wslScanRow) els.wslScanRow.classList.toggle('hidden', state.appInfo?.platform !== 'win32');
+  renderWslPanel();
   els.systemGlassInput.checked = state.settings.systemGlass !== false;
   els.liveDotInput.checked = state.settings.showLiveDot !== false;
   els.toolIconsInput.checked = state.settings.showToolIcons !== false;
@@ -3727,12 +3728,65 @@ function renderServiceProviderList() {
   return wrap;
 }
 
-function localClientStatus() {
+function localDevice() {
   const devices = state.stats?.devices || [];
   const localId = state.settings?.deviceId || '';
-  const local = (localId && devices.find((device) => device.deviceId === localId))
+  return (localId && devices.find((device) => device.deviceId === localId))
     || (devices.length === 1 ? devices[0] : null);
-  return local?.clientStatus || {};
+}
+
+function localClientStatus() {
+  return localDevice()?.clientStatus || {};
+}
+
+function localWslStatus() {
+  return localDevice()?.wslStatus || null;
+}
+
+// WSL attribution panel: shows the WSL pipeline state + which tools were detected
+// (markers) vs which returned tokens. Windows-only (the whole block hides off-Win).
+function renderWslPanel() {
+  if (!els.wslScanRow) return;
+  const isWin = state.appInfo?.platform === 'win32';
+  els.wslScanRow.classList.toggle('hidden', !isWin);
+  if (!els.wslPanel) return;
+  els.wslPanel.replaceChildren();
+  const status = localWslStatus();
+  if (!isWin || !status) return;
+
+  const header = document.createElement('div');
+  header.className = 'wsl-panel-header';
+  const title = document.createElement('span');
+  title.className = 'wsl-panel-title';
+  title.textContent = t('settings.collection.wslPanel.title');
+  // Tone classes are the existing ones: ok (green) / neutral (amber) / muted (grey).
+  const tone = (status.state === 'active') ? 'ok'
+    : (status.state === 'no-data' || status.state === 'not-running') ? 'neutral'
+    : 'muted';
+  const stateTag = document.createElement('span');
+  stateTag.className = `tool-status-tag tool-status-tag-${tone}`;
+  const stateKeyMap = { active: 'active', 'no-data': 'noData', 'not-running': 'notRunning', 'not-installed': 'notInstalled', disabled: 'disabled' };
+  stateTag.textContent = t(`settings.collection.wslPanel.${stateKeyMap[status.state] || 'disabled'}`);
+  header.append(title, stateTag);
+  els.wslPanel.append(header);
+
+  // Tool rows whenever detection found markers (active OR markers-but-no-tokens).
+  if ((status.detected || []).length > 0) {
+    const withData = new Set(status.withData || []);
+    for (const id of status.detected) {
+      const row = document.createElement('div');
+      row.className = 'wsl-panel-row';
+      const name = document.createElement('span');
+      name.className = 'wsl-panel-name';
+      name.textContent = (clientLabels[id] || id);
+      const has = withData.has(id);
+      const tag = document.createElement('span');
+      tag.className = `tool-status-tag tool-status-tag-${has ? 'ok' : 'neutral'}`;
+      tag.textContent = t(has ? 'settings.collection.wslPanel.hasData' : 'settings.collection.wslPanel.noDataTag');
+      row.append(name, tag);
+      els.wslPanel.append(row);
+    }
+  }
 }
 
 function renderToolPreferences() {
@@ -4446,6 +4500,7 @@ window.tokenMonitor.onStatsPush?.((payload) => {
     render();
     renderLimitProviderCheckboxes();
     renderToolPreferences();
+    renderWslPanel();
     renderDeepseekStatus();
     renderMinimaxStatus();
     renderCopilotStatus();

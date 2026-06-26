@@ -39,7 +39,7 @@ test('progressive loading fires onProgress after each period scan', async () => 
     limitsEnabled: false,
     historyEnabled: false,
     runTokscale: sequentialTokscale,
-    collectWslUsage: async () => emptyWslBundle(),
+    collectWslUsage: async () => ({ bundle: emptyWslBundle(), detected: [] }),
     onProgress: (data) => partials.push({ ...data })
   });
   // First partial: today only
@@ -76,7 +76,7 @@ test('progressive loading skips onProgress on anchored ticks', async () => {
     todayOnlyAnchor: anchor,
     wslAnchor: emptyWslBundle(),
     runTokscale: sequentialTokscale,
-    collectWslUsage: async () => emptyWslBundle(),
+    collectWslUsage: async () => ({ bundle: emptyWslBundle(), detected: [] }),
     onProgress: () => partials.push('called')
   });
   assert.equal(partials.length, 0, 'anchored tick should not fire onProgress');
@@ -97,7 +97,7 @@ test('progressive loading onProgress throw does not abort the full scan', async 
     limitsEnabled: false,
     historyEnabled: false,
     runTokscale: sequentialTokscale,
-    collectWslUsage: async () => emptyWslBundle(),
+    collectWslUsage: async () => ({ bundle: emptyWslBundle(), detected: [] }),
     onProgress: () => {
       onProgressCalled = true;
       throw new Error('simulated progress error');

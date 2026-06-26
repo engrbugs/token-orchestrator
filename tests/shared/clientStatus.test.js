@@ -97,3 +97,28 @@ test('aggregateDevices omits clientStatus when the record has none', () => {
   const stats = aggregateDevices([{ deviceId: 'mac' }], 0);
   assert.equal(Object.prototype.hasOwnProperty.call(stats.devices[0], 'clientStatus'), false);
 });
+
+test('normalizeDeviceRecord keeps valid wslStatus and normalizes ids', () => {
+  const normalized = normalizeDeviceRecord({
+    deviceId: 'win',
+    wslStatus: { state: 'active', detected: ['Codex', 'hermes', ''], withData: ['codex'] }
+  });
+  assert.deepEqual(normalized.wslStatus, { state: 'active', detected: ['codex', 'hermes'], withData: ['codex'] });
+});
+
+test('normalizeDeviceRecord drops wslStatus with an unknown state', () => {
+  const normalized = normalizeDeviceRecord({ deviceId: 'win', wslStatus: { state: 'bogus', detected: ['codex'] } });
+  assert.equal(normalized.wslStatus, null);
+});
+
+test('aggregateDevices exposes wslStatus on each device entry', () => {
+  const stats = aggregateDevices([
+    { deviceId: 'win', wslStatus: { state: 'no-data', detected: ['hermes'], withData: [] } }
+  ], 0);
+  assert.deepEqual(stats.devices[0].wslStatus, { state: 'no-data', detected: ['hermes'], withData: [] });
+});
+
+test('aggregateDevices omits wslStatus when the record has none', () => {
+  const stats = aggregateDevices([{ deviceId: 'win' }], 0);
+  assert.equal(Object.prototype.hasOwnProperty.call(stats.devices[0], 'wslStatus'), false);
+});

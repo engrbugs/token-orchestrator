@@ -8,8 +8,32 @@ const {
   listRunningWslDistros,
   emptyWslBundle,
   wslUsageHomes,
+  homeHasData,
   collectWslUsage
 } = require('../../src/shared/wslUsage');
+
+test('homeHasData returns the client ids whose markers are present', () => {
+  const home = '\\\\wsl$\\Ubuntu\\home\\u';
+  const present = new Set([
+    `${home}\\.codex\\sessions`,
+    `${home}\\.hermes`
+  ]);
+  const existsSync = (p) => present.has(p);
+  const ids = homeHasData(home, existsSync);
+  assert.deepEqual([...ids].sort(), ['codex', 'hermes']);
+});
+
+test('homeHasData maps an alternate-root marker to its client id', () => {
+  const home = '\\\\wsl$\\Ubuntu\\home\\u';
+  const present = new Set([`${home}\\.kimi-code\\sessions`]);
+  const ids = homeHasData(home, (p) => present.has(p));
+  assert.deepEqual([...ids], ['kimi']);
+});
+
+test('homeHasData returns empty array when no markers present', () => {
+  const ids = homeHasData('\\\\wsl$\\Ubuntu\\home\\u', () => false);
+  assert.deepEqual(ids, []);
+});
 
 test('isWslInstalled is false on non-win32 without calling exec', () => {
   let called = false;
@@ -224,7 +248,7 @@ test('collectWslUsage sums two homes per period', async () => {
     '\\\\wsl$\\Ubuntu\\home\\alice': { today: 10, month: 100, allTime: 1000 },
     '\\\\wsl$\\Ubuntu\\home\\bob': { today: 5, month: 50, allTime: 500 }
   };
-  const bundle = await collectWslUsage(
+  const { bundle } = await collectWslUsage(
     { clients: 'claude', allTimeSince: '2025-01-01', commandTimeoutMs: 1000, runTokscale: tokscaleStub(map) },
     deps
   );
@@ -234,8 +258,44 @@ test('collectWslUsage sums two homes per period', async () => {
   assert.deepEqual(bundle.today.clients, { claude: 15 });
 });
 
+test('collectWslUsage reports detected clients separate from those with data', async () => {
+  // One running distro, one home with BOTH .codex and .hermes markers, but
+  // tokscale only returns tokens for codex (hermes SQLite reads empty over 9P).
+  const home = '\\\\wsl$\\Ubuntu\\home\\u';
+  const deps = {
+    platform: 'win32',
+    exec: (cmd) => (cmd === 'reg' ? 'Lxss' : 'Ubuntu\n'),
+    readdirSync: () => ['u'],
+    existsSync: (p) => p.startsWith(`${home}\\.codex`) || p.startsWith(`${home}\\.hermes`)
+  };
+  const runTokscale = async () => ({ entries: [{ client: 'codex', sessionId: 's', model: 'm', input: 5, output: 0, cost: 0 }] });
+  const { bundle, detected } = await collectWslUsage(
+    { clients: 'codex,hermes', allTimeSince: '2024-01-01', commandTimeoutMs: 1000, runTokscale },
+    deps
+  );
+  assert.deepEqual([...detected].sort(), ['codex', 'hermes']); // both markers found
+  assert.deepEqual(Object.keys(bundle.allTime.clients), ['codex']); // only codex returned tokens
+});
+
+test('collectWslUsage does not report detected clients the user is not tracking', async () => {
+  const home = '\\\\wsl$\\Ubuntu\\home\\u';
+  const deps = {
+    platform: 'win32',
+    exec: (cmd) => (cmd === 'reg' ? 'Lxss' : 'Ubuntu\n'),
+    readdirSync: () => ['u'],
+    // Home holds BOTH codex and openclaw markers, but only codex is tracked.
+    existsSync: (p) => p.startsWith(`${home}\\.codex`) || p.startsWith(`${home}\\.openclaw`)
+  };
+  const runTokscale = async () => ({ entries: [] });
+  const { detected } = await collectWslUsage(
+    { clients: 'codex', allTimeSince: '2024-01-01', commandTimeoutMs: 1000, runTokscale },
+    deps
+  );
+  assert.deepEqual(detected, ['codex']); // openclaw marker present but untracked -> excluded
+});
+
 test('collectWslUsage returns empty bundle when no homes', async () => {
-  const bundle = await collectWslUsage(
+  const { bundle } = await collectWslUsage(
     { clients: 'claude', allTimeSince: '2025-01-01', commandTimeoutMs: 1000, runTokscale: async () => ({}) },
     { platform: 'darwin' }
   );
@@ -255,7 +315,7 @@ test('collectWslUsage logs and skips a home that throws, keeps others', async ()
     if (home.includes('Debian')) throw new Error('9p down');
     return entriesJson(7);
   };
-  const bundle = await collectWslUsage(
+  const { bundle } = await collectWslUsage(
     { clients: 'claude', allTimeSince: '2025-01-01', commandTimeoutMs: 1000, runTokscale, logger: (m) => logs.push(m) },
     deps
   );

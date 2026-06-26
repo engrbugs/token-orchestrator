@@ -89,7 +89,7 @@ test('warm progressive preview keeps the frozen WSL contribution in today and mo
     historyEnabled: false,
     limitsEnabled: false,
     runTokscale: hostScan,
-    collectWslUsage: async () => wslBundle(),
+    collectWslUsage: async () => ({ bundle: wslBundle(), detected: ['claude'] }),
     onPreview: (p) => previews.push(p),
     onUpdate: (summary) => updates.push(summary)
   });

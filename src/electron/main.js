@@ -1250,20 +1250,22 @@ function startHostStats() {
 }
 
 // Detection status is about this machine's local files, so stamp the freshly
-// collected local clientStatus onto the local device in whatever stats we hand the
-// renderer. This keeps the采集 tags correct in sync mode without depending on the
-// hub (or a remote Worker) being redeployed to preserve the field.
-function injectLocalClientStatus(stats) {
-  const status = lastCollectedDevice?.clientStatus;
-  if (!stats || !status || !Array.isArray(stats.devices)) return stats;
+// collected local clientStatus AND wslStatus onto the local device in whatever
+// stats we hand the renderer. This keeps the 采集 tags + WSL panel correct in
+// sync/host mode without depending on the hub (or a remote Worker) being
+// redeployed to preserve these fields.
+function injectLocalDeviceStatus(stats) {
+  if (!stats || !lastCollectedDevice || !Array.isArray(stats.devices)) return stats;
   const device = stats.devices.find((entry) => entry.deviceId === lastCollectedDevice.deviceId);
-  if (device) device.clientStatus = status;
+  if (!device) return stats;
+  if (lastCollectedDevice.clientStatus) device.clientStatus = lastCollectedDevice.clientStatus;
+  if (lastCollectedDevice.wslStatus) device.wslStatus = lastCollectedDevice.wslStatus;
   return stats;
 }
 
 function sendPush(payload) {
   if (payload?.data?.stats) {
-    injectLocalClientStatus(payload.data.stats);
+    injectLocalDeviceStatus(payload.data.stats);
     latestStats = payload.data.stats;
     updateTrayDisplay();
   }
@@ -1395,6 +1397,7 @@ function startLocalCollector() {
       const needsMonth = !summary.month;
       const needsAllTime = !summary.allTime;
       const needsClientStatus = !summary.clientStatus;
+      const needsWslStatus = !summary.wslStatus;
 
       const visible = summaryWithArchivedClientUsage(summary);
       localDevice = carryDeviceHistory(localDevice, { ...visible, receivedAt: new Date().toISOString() });
@@ -1409,6 +1412,11 @@ function startLocalCollector() {
       // Carry forward clientStatus when allTime is not yet available.
       if (needsClientStatus && prevDevice?.clientStatus) {
         localDevice = { ...localDevice, clientStatus: prevDevice.clientStatus };
+      }
+      // Carry forward wslStatus — previews never include it, so without this the
+      // WSL detection panel would blank during a warm scan if Settings is open.
+      if (needsWslStatus && prevDevice?.wslStatus) {
+        localDevice = { ...localDevice, wslStatus: prevDevice.wslStatus };
       }
       if (!visible.limits && prevDevice?.limits) {
         localDevice = { ...localDevice, limits: prevDevice.limits };
@@ -1790,7 +1798,7 @@ async function fetchStats(options = {}) {
     if (force && syncCollectorHandle && !isExternalAgentActive()) {
       await syncCollectorHandle.tick('manual', tickOptions);
     }
-    return injectLocalClientStatus(embeddedHub.hub.getStats());
+    return injectLocalDeviceStatus(embeddedHub.hub.getStats());
   }
   if (force && syncCollectorHandle && !isExternalAgentActive()) {
     await syncCollectorHandle.tick('manual', tickOptions);
@@ -1800,7 +1808,7 @@ async function fetchStats(options = {}) {
   const url = `${hubUrl.replace(/\/$/, '')}/api/stats`;
   const response = await fetch(url, { headers: secret ? { authorization: `Bearer ${secret}` } : {} });
   if (!response.ok) throw new Error(`Hub ${response.status}: ${(await response.text()).slice(0, 200)}`);
-  return injectLocalClientStatus(await response.json());
+  return injectLocalDeviceStatus(await response.json());
 }
 
 function managedPricingSidecarPath() {

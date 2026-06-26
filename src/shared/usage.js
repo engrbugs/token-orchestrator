@@ -172,6 +172,15 @@ function normalizeClientStatus(value) {
   return status;
 }
 
+const WSL_STATUS_STATES = new Set(['active', 'no-data', 'not-running', 'not-installed', 'disabled']);
+
+function normalizeWslStatus(value) {
+  if (!value || typeof value !== 'object') return null;
+  if (!WSL_STATUS_STATES.has(value.state)) return null;
+  const ids = (arr) => (Array.isArray(arr) ? arr.map(normalizeClientName).filter(Boolean) : []);
+  return { state: value.state, detected: ids(value.detected), withData: ids(value.withData) };
+}
+
 function validDate(value) {
   const date = new Date(value || '');
   return Number.isNaN(date.getTime()) ? null : date;
@@ -495,6 +504,7 @@ function normalizeDeviceRecord(record) {
   };
   if (hasOwn(record, 'trackedClients')) normalized.trackedClients = normalizeTrackedClients(record.trackedClients);
   if (hasOwn(record, 'clientStatus')) normalized.clientStatus = normalizeClientStatus(record.clientStatus);
+  if (hasOwn(record, 'wslStatus')) normalized.wslStatus = normalizeWslStatus(record.wslStatus);
   if (hasOwn(record, 'history')) normalized.history = coerceHistory(record.history);
   for (const periodName of PERIODS) normalized.periods[periodName] = normalizePeriod(record[periodName] || record.periods?.[periodName]);
   return normalized;
@@ -710,6 +720,7 @@ function aggregateDevices(devices, staleAfterMs, nowMs = Date.now()) {
       stale,
       ...(hasOwn(normalized, 'trackedClients') ? { trackedClients: normalized.trackedClients } : {}),
       ...(hasOwn(normalized, 'clientStatus') ? { clientStatus: normalized.clientStatus } : {}),
+      ...(hasOwn(normalized, 'wslStatus') ? { wslStatus: normalized.wslStatus } : {}),
       periods: normalized.periods,
       limits: normalized.limits
     });

@@ -38,6 +38,36 @@ const WSL_DATA_MARKERS = [
   '.zcode/projects'
 ];
 
+// Maps every WSL_DATA_MARKERS entry to the tracked-client id that owns it, so a
+// matched marker can be attributed back to a client (alt roots collapse to one
+// id, e.g. .kimi/.kimi-code -> kimi; the OpenClaw bot dirs -> openclaw; the two
+// Cline globalStorage paths -> cline). Ids must match DEFAULT_CLIENTS.
+const MARKER_CLIENTS = {
+  '.claude/projects': 'claude',
+  '.claude/transcripts': 'claude',
+  '.codex/sessions': 'codex',
+  '.local/share/opencode': 'opencode',
+  '.openclaw/agents': 'openclaw',
+  '.clawdbot/agents': 'openclaw',
+  '.moltbot/agents': 'openclaw',
+  '.moldbot/agents': 'openclaw',
+  '.hermes': 'hermes',
+  '.kimi/sessions': 'kimi',
+  '.kimi-code/sessions': 'kimi',
+  '.qwen/projects': 'qwen',
+  '.grok/sessions': 'grok',
+  '.copilot/otel': 'copilot',
+  '.config/Code/User/globalStorage/saoudrizwan.claude-dev/tasks': 'cline',
+  '.vscode-server/data/User/globalStorage/saoudrizwan.claude-dev/tasks': 'cline',
+  '.pi/agent/sessions': 'pi',
+  '.omp/agent/sessions': 'pi',
+  '.local/share/zed/threads/threads.db': 'zed',
+  '.config/Code/User/globalStorage/kilocode.kilo-code/tasks': 'kilocode',
+  '.vscode-server/data/User/globalStorage/kilocode.kilo-code/tasks': 'kilocode',
+  '.local/share/micode/mimocode.db': 'micode',
+  '.zcode/projects': 'zcode'
+};
+
 // Clients whose tokscale `--home` scan can fall back to a HOST-native database
 // that ignores `--home`, mapped to the WSL-home file whose presence suppresses
 // that fallback. Only `zed` qualifies among tracked clients: tokscale 3.1.3's
@@ -103,8 +133,17 @@ function listRunningWslDistros(deps = {}) {
     .filter(Boolean);
 }
 
+// Returns the tracked-client ids whose marker is present in this home (deduped).
+// Empty array = no tracked client stores data here.
 function homeHasData(home, existsSync) {
-  return WSL_DATA_MARKERS.some((rel) => existsSync(`${home}\\${rel.replace(/\//g, '\\')}`));
+  const ids = new Set();
+  for (const rel of WSL_DATA_MARKERS) {
+    if (existsSync(`${home}\\${rel.replace(/\//g, '\\')}`)) {
+      const client = MARKER_CLIENTS[rel];
+      if (client) ids.add(client);
+    }
+  }
+  return [...ids];
 }
 
 // Scope the requested client CSV for one WSL home: pass every client through
@@ -135,18 +174,36 @@ function wslUsageHomes(deps = {}) {
     } catch (_) { /* distro has no /home or it is unreadable */ }
     candidates.push(`\\\\wsl$\\${distro}\\root`);
     for (const home of candidates) {
-      if (homeHasData(home, existsSync)) homes.push(home);
+      if (homeHasData(home, existsSync).length > 0) homes.push(home);
     }
   }
   return homes;
+}
+
+// Cheap WSL readiness probe (no tokscale). Returns 'not-installed' (no Lxss),
+// 'not-running' (installed but no running distro), or 'ok'.
+function probeWslState(deps = {}) {
+  if (!isWslInstalled(deps)) return 'not-installed';
+  if (listRunningWslDistros(deps).length === 0) return 'not-running';
+  return 'ok';
 }
 
 async function collectWslUsage(options = {}, deps = {}) {
   const { clients, allTimeSince, commandTimeoutMs, runTokscale, logger } = options;
   const existsSync = deps.existsSync || fs.existsSync;
   const bundle = emptyWslBundle();
-  if (!clients || typeof runTokscale !== 'function') return bundle;
+  const detected = new Set();
+  if (!clients || typeof runTokscale !== 'function') return { bundle, detected: [] };
+  // Only attribute markers for clients the user is actually tracking — a marker
+  // for an untracked client must not surface in the panel.
+  const tracked = new Set(String(clients).split(',').map((c) => c.trim()).filter(Boolean));
   for (const home of wslUsageHomes(deps)) {
+    // Attribution: every marker hit in this home counts as "detected", even if
+    // clientsForHomeScan drops it from the scan (e.g. a zed-only home with no
+    // threads.db) — detection is marker-based, independent of whether we scan.
+    for (const id of homeHasData(home, existsSync)) {
+      if (tracked.has(id)) detected.add(id);
+    }
     // Pass the requested clients through, dropping only a host-fallback-gated
     // client (zed) whose gate file is missing here — otherwise tokscale's
     // Windows Zed scanner would re-read the host %LOCALAPPDATA% DB and
@@ -168,16 +225,19 @@ async function collectWslUsage(options = {}, deps = {}) {
       if (typeof logger === 'function') logger(`wsl usage scan failed for ${home}: ${error.message}`);
     }
   }
-  return bundle;
+  return { bundle, detected: [...detected] };
 }
 
 module.exports = {
   WSL_DATA_MARKERS,
   WSL_HOST_FALLBACK_GATES,
+  MARKER_CLIENTS,
   clientsForHomeScan,
   collectWslUsage,
   emptyWslBundle,
+  homeHasData,
   isWslInstalled,
   listRunningWslDistros,
+  probeWslState,
   wslUsageHomes
 };

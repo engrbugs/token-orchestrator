@@ -91,7 +91,7 @@ test('anchored tick with valid anchor runs todayOnly scan and derives month/allT
     todayOnlyAnchor: anchor,
     wslAnchor: emptyWslBundle(),
     runTokscale: stubTokscale,
-    collectWslUsage: async () => emptyWslBundle()
+    collectWslUsage: async () => ({ bundle: emptyWslBundle(), detected: [] })
   });
 
   // Only one tokscale call (--today), not three
