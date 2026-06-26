@@ -357,6 +357,77 @@ test('unparseable fullScanAt forces a full scan on first interval tick', async (
   }
 });
 
+test('WSL toggle off: persisted wslAnchor is not merged into warm previews', async () => {
+  const tmpShared = fs.mkdtempSync(path.join(os.tmpdir(), 'tm-wsl-off-'));
+  const dateKey = localTodayKey();
+
+  fs.mkdirSync(tmpShared, { recursive: true });
+  // Seed a persisted anchor that still carries a WSL bundle, as if WSL scanning
+  // was ON during the last full scan. No fullScanAt -> the first tick is a full
+  // scan, so progressive previews fire (the only place wslAnchor is read without
+  // the wslScanEnabled gate).
+  const wslPeriod = { ...emptyPeriod(), totalTokens: 999, clients: { claude: 999 } };
+  const anchorData = {
+    dateKey,
+    today: mkPeriod(), month: mkPeriod(), allTime: mkPeriod(),
+    wslBundle: { today: wslPeriod, month: wslPeriod, allTime: wslPeriod },
+    configFingerprint: 'claude|2024-01-01'
+    // no fullScanAt -> forces a full scan on the first interval tick
+  };
+  fs.writeFileSync(path.join(tmpShared, 'collector-anchor.json'), JSON.stringify(anchorData));
+
+  // Host scan returns empty entries -> host periods are 0. If the persisted WSL
+  // bundle leaks into a preview it shows totalTokens 999 instead of 0.
+  const childProcess = require('node:child_process');
+  const originalSpawn = childProcess.spawn;
+  childProcess.spawn = () => {
+    const { EventEmitter } = require('node:events');
+    const child = new EventEmitter();
+    child.stdout = new EventEmitter();
+    child.stderr = new EventEmitter();
+    child.stdin = { end: () => {} };
+    child.kill = () => {};
+    setImmediate(() => {
+      child.stdout.emit('data', Buffer.from(JSON.stringify({ entries: [] })));
+      child.emit('close', 0);
+    });
+    return child;
+  };
+
+  const originalSharedDir = process.env.TOKEN_MONITOR_SHARED_DIR;
+  process.env.TOKEN_MONITOR_SHARED_DIR = tmpShared;
+  let handle;
+  try {
+    const { startCollector } = freshCollector();
+    const previews = [];
+    const updates = [];
+    handle = startCollector({
+      ...baseOptions,
+      wslScanEnabled: false,
+      intervalMs: 60 * 60 * 1000,
+      watchEnabled: false,
+      onPreview: (p) => previews.push(p),
+      onUpdate: () => updates.push(true)
+    });
+
+    await waitForCondition(() => updates.length === 1);
+    assert.ok(previews.length >= 1, 'a full-scan tick must emit at least one preview');
+    for (const p of previews) {
+      assert.equal(p.today.totalTokens, 0, 'preview today must not carry the persisted WSL bundle when the toggle is off');
+      if (p.month) assert.equal(p.month.totalTokens, 0, 'preview month must not carry persisted WSL when off');
+    }
+    // Final summary is host-only too (collectWsl is never called when off).
+    handle.stop();
+  } finally {
+    childProcess.spawn = originalSpawn;
+    if (originalSharedDir === undefined) delete process.env.TOKEN_MONITOR_SHARED_DIR;
+    else process.env.TOKEN_MONITOR_SHARED_DIR = originalSharedDir;
+    if (handle) try { handle.stop(); } catch (_) {}
+    delete require.cache[collectorPath];
+    fs.rmSync(tmpShared, { recursive: true, force: true });
+  }
+});
+
 test('cross-day anchor invalidation: stale dateKey triggers full scan', async () => {
   const childProcess = require('node:child_process');
   const originalSpawn = childProcess.spawn;

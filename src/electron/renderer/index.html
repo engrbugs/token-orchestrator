@@ -268,6 +268,10 @@
               </div>
               <div id="clientDisplayList" class="tool-preference-list"></div>
             </div>
+            <div id="wslScanRow" class="settings-subgroup settings-wsl-scan-row hidden">
+              <label class="checkbox-label"><input id="wslScanInput" type="checkbox" /><span data-i18n="settings.collection.wslScan">Scan tools inside WSL</span></label>
+              <p class="settings-note" data-i18n="settings.collection.wslScanDesc">When off, Windows no longer scans WSL tools over \\wsl$.</p>
+            </div>
             <div id="customPricingAccountGroup" class="settings-group cursor-account-group">
               <button id="customPricingSettingsToggle" class="settings-group-header cursor-settings-toggle" type="button" aria-expanded="false" aria-controls="customPricingSettingsDetails">
                 <span data-i18n="settings.customPricing.title">Custom model pricing</span>

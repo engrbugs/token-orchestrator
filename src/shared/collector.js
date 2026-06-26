@@ -399,7 +399,7 @@ async function collectUsageOnce(options) {
   // 3. !anchorUsed (full scan): scan WSL as part of the complete rescan.
   const windowsPeriods = { today, month, allTime };
   let wslBundle = emptyWslBundle();
-  if (normalizedClients) {
+  if (normalizedClients && options.wslScanEnabled !== false) {
     if (options.refreshWsl) {
       wslBundle = await collectWsl({
         clients: normalizedClients,
@@ -620,7 +620,11 @@ function startCollector(options) {
       const fp = configFingerprint(clients, allTimeSince);
       if (saved.configFingerprint === fp) {
         anchor = { dateKey: saved.dateKey, today: saved.today, month: saved.month, allTime: saved.allTime };
-        wslAnchor = saved.wslBundle || null;
+        // Don't restore a persisted WSL snapshot when WSL scanning is now off —
+        // the configFingerprint intentionally ignores the toggle (host periods
+        // stay valid), so without this gate a warm-scan preview would briefly
+        // re-merge the old WSL totals before the first full tick clears them.
+        wslAnchor = options.wslScanEnabled !== false ? (saved.wslBundle || null) : null;
         if (saved.fullScanAt) {
           const parsed = Date.parse(saved.fullScanAt);
           // Only trust timestamps that are valid and not in the future.

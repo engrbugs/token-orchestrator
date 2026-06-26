@@ -107,3 +107,21 @@ test('interval anchored tick with refreshWsl rescans WSL and updates anchor', as
   });
   assert.equal(wslCalls, 0, 'watch tick must reuse wslAnchor, not rescan');
 });
+
+test('wslScanEnabled:false skips the WSL scan entirely', async () => {
+  let wslCalls = 0;
+  const summary = await collectUsageOnce({
+    clients: 'claude,gemini',
+    allTimeSince: '2025-01-01',
+    commandTimeoutMs: 1000,
+    deviceId: 'dev1',
+    limitsEnabled: false,
+    wslScanEnabled: false,
+    runTokscale: windowsTokscale,
+    collectWslUsage: async () => { wslCalls += 1; return bundleWith(9); }
+  });
+  assert.equal(wslCalls, 0); // WSL scan never invoked
+  assert.equal(summary.today.totalTokens, 20); // windows-only, no WSL contribution
+  assert.deepEqual(summary.today.clients, { claude: 20 }); // gemini (WSL-only) absent
+  assert.notEqual(summary.clientStatus.gemini, 'active'); // not active without WSL usage
+});
