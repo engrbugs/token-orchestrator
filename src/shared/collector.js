@@ -366,6 +366,11 @@ function shouldIncludeHistory(nowMs, lastHistoryAtMs, historyIntervalMs, force, 
 }
 async function collectUsageOnce(options) {
   const { clients, allTimeSince, commandTimeoutMs, deviceId, agentVersion = appVersion(), agentRuntime = '' } = options;
+  // One snapshot, one instant: capture the clock before any tokscale scan and
+  // reuse it for the today-window key and updatedAt, so a collection that
+  // straddles local midnight cannot pair a day-N today scan with a day-N+1
+  // window (issue #37 follow-up). Injectable for tests.
+  const collectedAt = options.now != null ? new Date(options.now) : new Date();
   const runTokscaleFn = options.runTokscale || runTokscale;
   const collectWsl = options.collectWslUsage || collectWslUsageImpl;
   const probeWslStateFn = options.probeWslState || probeWslStateImpl;
@@ -378,7 +383,7 @@ async function collectUsageOnce(options) {
   let month = emptyPeriod();
   let allTime = emptyPeriod();
   const anchor = options.todayOnlyAnchor;
-  const anchorUsed = Boolean(anchor && anchor.dateKey === localTodayKey());
+  const anchorUsed = Boolean(anchor && anchor.dateKey === localTodayKey(collectedAt));
   if (normalizedClients) {
     await maybeSyncCursor(normalizedClients, options.logger);
     await maybeSyncAntigravity(normalizedClients, options.logger, options.homeDir || os.homedir());
@@ -483,13 +488,13 @@ async function collectUsageOnce(options) {
     deviceId,
     hostname: os.hostname(),
     platform: `${process.platform}-${process.arch}`,
-    updatedAt: new Date().toISOString(),
+    updatedAt: collectedAt.toISOString(),
     agentVersion,
     ...(agentRuntime ? { agentRuntime } : {}),
     trackedClients: normalizedClients ? normalizedClients.split(',') : [],
     clientStatus: deriveClientStatus(normalizedClients, allTime),
     wslStatus,
-    periodWindows: computePeriodWindows(),
+    periodWindows: computePeriodWindows(collectedAt),
     today,
     month,
     allTime
@@ -502,7 +507,7 @@ async function collectUsageOnce(options) {
       historyEnabled: options.historyEnabled,
       commandTimeoutMs: options.historyTimeoutMs,
       capDays: options.historyCapDays,
-      todayKey: localTodayKey(),
+      todayKey: localTodayKey(collectedAt),
       runGraph: options.runGraph,
       logger: options.logger
     });

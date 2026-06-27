@@ -3,7 +3,7 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
 
-const { computePeriodWindows } = require('../../src/shared/collector');
+const { computePeriodWindows, collectUsageOnce } = require('../../src/shared/collector');
 
 // endsAt is computed in the device's local time and serialized to UTC, so the
 // hub can expire a stale today/month snapshot with a plain nowMs < endsAt check.
@@ -43,4 +43,21 @@ test('computePeriodWindows wraps the month boundary at year end', () => {
   assert.equal(monthEnd.getFullYear(), 2027);
   assert.equal(monthEnd.getMonth(), 0);
   assert.equal(monthEnd.getDate(), 1);
+});
+
+// A single snapshot must carry a single timestamp: updatedAt and periodWindows
+// have to come from the same instant, captured before the today scan, so a
+// collection that straddles local midnight cannot stamp a today scan from day N
+// with a window that ends on day N+1 (issue #37 follow-up).
+test('collectUsageOnce stamps updatedAt and periodWindows from one injected clock', async () => {
+  const now = new Date(2026, 0, 15, 12, 0, 0); // local 2026-01-15 12:00
+  const summary = await collectUsageOnce({
+    clients: '',
+    deviceId: 'device-a',
+    now,
+    historyEnabled: false,
+    limitsEnabled: false
+  });
+  assert.equal(summary.updatedAt, now.toISOString());
+  assert.deepEqual(summary.periodWindows, computePeriodWindows(now));
 });
