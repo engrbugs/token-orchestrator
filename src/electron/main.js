@@ -13,7 +13,7 @@ const { appVersion } = require('../shared/appVersion');
 // a closed parent pipe turns the next log call into an unhandled 'error'
 // event and Electron pops a "JavaScript error in the main process" dialog.
 installSafeStdout();
-const { DEFAULT_CLIENTS, clientsCsvForSetting } = require('../shared/clientTracking');
+const { DEFAULT_CLIENTS, KNOWN_CLIENTS, clientsCsvForSetting } = require('../shared/clientTracking');
 const { startCollector, lookupModelPricing } = require('../shared/collector');
 const { customPricingPath } = require('../shared/tokscaleConfig');
 const { applyCustomPricing, normalizeCustomPricingSetting } = require('../shared/tokscaleCustomPricing');
@@ -120,7 +120,7 @@ const TRAY_CONTENT_VALUES = new Set(['tokens', 'cost', 'both', 'tokensAll', 'cos
 const HUB_MODE_VALUES = new Set(['local', 'client', 'host']);
 const LANGUAGE_VALUES = new Set(['auto', 'en', 'zh-TW', 'zh-CN']);
 const HUB_DEFAULT_PORT = 17321;
-const DEFAULT_CLIENT_LIST = DEFAULT_CLIENTS.split(',').map((id) => ({ id }));
+const KNOWN_CLIENT_LIST = KNOWN_CLIENTS.split(',').map((id) => ({ id }));
 const DEFAULT_VIEW_LIST = ['home', 'tool', 'status', 'device', 'model', 'session', 'limits', 'trends'].map((id) => ({ id }));
 const DEFAULT_HOME_MODULE_LIST = ['limits', 'tool', 'device', 'model', 'trends'].map((id) => ({ id }));
 
@@ -443,10 +443,10 @@ function normalizeHiddenLimitProviders(value) {
 }
 
 function migrateClientDisplayOrder(value) {
-  const known = new Set(DEFAULT_CLIENTS.split(','));
+  const known = new Set(KNOWN_CLIENTS.split(','));
   const raw = Array.isArray(value) ? value : String(value || '').split(',');
   const hasKnownClient = raw.some((item) => known.has(String(item || '').trim().toLowerCase()));
-  return hasKnownClient ? normalizeClientDisplayOrder(value, DEFAULT_CLIENT_LIST).join(',') : '';
+  return hasKnownClient ? normalizeClientDisplayOrder(value, KNOWN_CLIENT_LIST).join(',') : '';
 }
 
 const SERVICE_STATUS_REFRESH_VALUES = new Set([0, 60000, 120000, 300000, 900000, 1800000]);
@@ -833,10 +833,10 @@ function readSettings() {
       merged.clientDisplayOrder = migrateClientDisplayOrder(saved.clientDisplayOrder);
     }
     if (saved.hiddenClients !== undefined) {
-      merged.hiddenClients = normalizeHiddenClients(saved.hiddenClients, DEFAULT_CLIENT_LIST);
+      merged.hiddenClients = normalizeHiddenClients(saved.hiddenClients, KNOWN_CLIENT_LIST);
     }
     if (saved.pinnedClients !== undefined) {
-      merged.pinnedClients = normalizePinnedClients(saved.pinnedClients, DEFAULT_CLIENT_LIST);
+      merged.pinnedClients = normalizePinnedClients(saved.pinnedClients, KNOWN_CLIENT_LIST);
     }
     if (saved.viewDisplayOrder !== undefined) {
       merged.viewDisplayOrder = migrateViewDisplayOrder(saved.viewDisplayOrder);
@@ -2402,8 +2402,8 @@ app.whenReady().then(() => {
       limitProviders: patch.limitProviders !== undefined ? parseLimitProviders(patch.limitProviders).join(',') : settings.limitProviders,
       limitProviderOrder: patch.limitProviderOrder !== undefined ? migrateLimitProviderOrder(patch.limitProviderOrder) : settings.limitProviderOrder,
       clientDisplayOrder: patch.clientDisplayOrder !== undefined ? migrateClientDisplayOrder(patch.clientDisplayOrder) : (settings.clientDisplayOrder || ''),
-      hiddenClients: patch.hiddenClients !== undefined ? normalizeHiddenClients(patch.hiddenClients, DEFAULT_CLIENT_LIST) : normalizeHiddenClients(settings.hiddenClients, DEFAULT_CLIENT_LIST),
-      pinnedClients: patch.pinnedClients !== undefined ? normalizePinnedClients(patch.pinnedClients, DEFAULT_CLIENT_LIST) : normalizePinnedClients(settings.pinnedClients, DEFAULT_CLIENT_LIST),
+      hiddenClients: patch.hiddenClients !== undefined ? normalizeHiddenClients(patch.hiddenClients, KNOWN_CLIENT_LIST) : normalizeHiddenClients(settings.hiddenClients, KNOWN_CLIENT_LIST),
+      pinnedClients: patch.pinnedClients !== undefined ? normalizePinnedClients(patch.pinnedClients, KNOWN_CLIENT_LIST) : normalizePinnedClients(settings.pinnedClients, KNOWN_CLIENT_LIST),
       viewDisplayOrder: patch.viewDisplayOrder !== undefined ? migrateViewDisplayOrder(patch.viewDisplayOrder) : (settings.viewDisplayOrder || ''),
       hiddenViews: patch.hiddenViews !== undefined ? normalizeHiddenViews(patch.hiddenViews, DEFAULT_VIEW_LIST) : normalizeHiddenViews(settings.hiddenViews, DEFAULT_VIEW_LIST),
       homeModuleOrder: patch.homeModuleOrder !== undefined ? normalizeHomeModuleOrder(patch.homeModuleOrder, DEFAULT_HOME_MODULE_LIST).join(',') : normalizeHomeModuleOrder(settings.homeModuleOrder, DEFAULT_HOME_MODULE_LIST).join(','),
