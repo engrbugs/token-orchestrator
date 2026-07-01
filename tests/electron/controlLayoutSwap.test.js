@@ -147,30 +147,25 @@ test('refresh button exposes busy, success, and error feedback states', () => {
   assert.equal(declaration(cssRule(css, '.refresh-button:disabled'), 'cursor'), 'default', 'disabled refresh keeps the normal arrow cursor');
   const html = readRendererFile('index.html');
   assert.match(html, /class="refresh-button-icon"/, 'refresh glyph has its own animation target');
-  assert.match(html, /class="refresh-button-spinner"/, 'loading glyph uses a dedicated SVG spinner');
-  assert.match(html, /viewBox="0 0 24 24"/, 'spinner is a standard 24px icon');
-  assert.equal((html.match(/class="refresh-button-spinner-bar"/g) || []).length, 6, 'spinner uses svg-spinners bars-rotate-fade style bars');
-  assert.match(html, /opacity="\.14"/, 'spinner has a very transparent trailing bar');
-  assert.match(html, /opacity="\.86"/, 'spinner has a nearly saturated leading bar');
-  assert.match(html, /rx="1\.5"/, 'spinner bars use rounded ends');
+  assert.match(html, /<span class="refresh-button-spinner" aria-hidden="true"><\/span>/, 'loading glyph is an empty span styled by a reusable CSS mask icon');
   assert.doesNotMatch(css, /\.refresh-button::after/, 'refresh loading should not add a competing ring layer');
   assert.doesNotMatch(css, /repeating-conic-gradient/, 'loading glyph should not be hand-drawn in CSS');
-  assert.match(css, /@keyframes refresh-spinner-spin/);
+  assert.doesNotMatch(css, /@keyframes refresh-spinner-spin/, 'the spinner animates itself (SMIL); no CSS rotation keyframe needed');
   assert.equal(declaration(cssRule(css, '.refresh-button-spinner'), 'width'), '0.94em', 'spinner should stay close to the reload glyph without feeling oversized');
   assert.equal(declaration(cssRule(css, '.refresh-button-spinner'), 'height'), '0.94em', 'spinner should stay close to the reload glyph without feeling oversized');
   assert.match(cssRule(css, '.refresh-button-spinner'), /display:\s*none/, 'spinner stays hidden while idle');
   assert.match(cssRule(css, '.refresh-button.is-refreshing .refresh-button-icon'), /display:\s*none/, 'loading state hides the reload glyph');
-  assert.match(css, /\.refresh-button\.is-refreshing \.refresh-button-spinner\s*\{[\s\S]*?animation:\s*refresh-spinner-spin/);
+  assert.match(css, /\.refresh-button\.is-refreshing \.refresh-button-spinner\s*\{\s*display:\s*block;\s*\}/, 'loading state reveals the masked spinner');
+  assert.match(cssRule(css, '.refresh-button-spinner::before'), /mask:\s*url\("icons\/actions\/spinner\.svg"\)/, 'spinner is a reusable asset file, not markup inlined in the page');
+  assert.equal(declaration(cssRule(css, '.refresh-button-spinner::before'), 'background'), 'currentColor', 'spinner mask is tinted by the button state color');
   assert.match(cssRule(css, '.refresh-button.is-refreshed'), /border-color:\s*rgba\(var\(--accent-rgb\)/);
   assert.match(cssRule(css, '.refresh-button.is-refresh-error'), /border-color:\s*rgba\(255,\s*99,\s*99/);
-  assert.match(css, /prefers-reduced-motion:\s*reduce[\s\S]*?\.refresh-button\.is-refreshing \.refresh-button-spinner[\s\S]*?animation:\s*none/);
+
+  const spinnerSvg = readRendererFile('icons/actions/spinner.svg');
+  assert.match(spinnerSvg, /<animate attributeName="opacity"/, 'spinner animates itself via SMIL, independent of CSS/JS');
 
   const notice = readRendererFile('icons/THIRD_PARTY_NOTICES.md');
-  assert.match(notice, /inline refresh loading icon: bars-rotate-fade/);
-  assert.match(notice, /svg-spinners/);
-  assert.match(notice, /svg-spinners license:/);
-  assert.match(notice, /Copyright \(c\) Utkarsh Verma/);
-  assert.match(notice, /Copyright \(c\) Ryan Halliwell/);
+  assert.doesNotMatch(notice, /svg-spinners/, 'the spinner is original artwork now, not a third-party icon');
   assert.equal(
     fs.existsSync(path.join(rendererDir, 'icons', 'settings', 'THIRD_PARTY_NOTICES.md')),
     false,
