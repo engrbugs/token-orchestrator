@@ -1448,6 +1448,21 @@ function renderProviderWindows(provider, color) {
         windows.append(node);
       }
     }
+  } else if (provider.provider === 'claude') {
+    // Claude usually shows session + one all-models weekly, but can carry a second
+    // model-scoped weekly (the temporary "Fable only" promo cap). Render every
+    // weekly the response actually has, and nothing when a bucket is absent — no
+    // empty placeholder — so the scoped bar appears only while the promo is live.
+    const session = windowForKind(provider, 'session');
+    if (session) windows.append(limitWindowNode(session.label || 'Session', session, color, 0.95));
+    for (const weekly of windowsForKind(provider, 'weekly')) {
+      const node = limitWindowNode(weekly.label || 'Weekly', weekly, color, 0.68);
+      // The all-models weekly pairs with Session in the two-column grid; a
+      // model-scoped weekly (the "Fable only" promo cap) has no partner, so span
+      // the full row instead of leaving a half-empty cell.
+      if (weekly.label) node.classList.add('limit-window-wide');
+      windows.append(node);
+    }
   } else {
     // Default: render only the windows the provider actually has. Providers
     // that only expose a single window shouldn't leave a half-empty bar next to
