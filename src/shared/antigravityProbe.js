@@ -86,12 +86,24 @@ function preferredPlanInfoName(planInfo) {
   );
 }
 
+// WMI on Windows quotes the executable path when it contains spaces
+// ("C:\...\Antigravity IDE\...\language_server_windows_x64.exe" --csrf_token …).
+// Strip those quotes before classification so path/boundary regexes match the
+// same way they do on unquoted macOS/Linux process listings. Without this, a
+// signed-in IDE language server is reported as not running.
+function normalizeCommandForMatch(command) {
+  return String(command || '').replaceAll(/["']/g, '').toLowerCase();
+}
+
 function isLanguageServerCommand(lowerCommand) {
   return /(^|[/\\])language(?:_|-)server(?:[_-][a-z0-9]+)*(?:\.exe)?(\s|$)/.test(lowerCommand);
 }
 
 function isAntigravityCommand(lowerCommand) {
   if (lowerCommand.includes('--app_data_dir') && lowerCommand.includes('antigravity')) return true;
+  // Current Windows AGY builds expose a generic language_server_win* binary
+  // without an Antigravity path or --app_data_dir in the command line.
+  if (lowerCommand.includes('language_server_win') || lowerCommand.includes('language-server-win')) return true;
   if (lowerCommand.includes('/antigravity/') || lowerCommand.includes('\\antigravity\\')) return true;
   if (lowerCommand.includes('/antigravity.app/') || lowerCommand.includes('\\antigravity\\')) return true;
   return false;
@@ -162,10 +174,16 @@ function parseProcessLine(line) {
   if (!Number.isFinite(pid) || pid <= 0) return null;
   const command = trimmed.slice(split + 1).trim();
   if (!command) return null;
-  const lower = command.toLowerCase();
-  const kind = antigravityProcessKind(lower);
-  if (!kind) return null;
+  const lower = normalizeCommandForMatch(command);
+  let kind = antigravityProcessKind(lower);
   const csrfToken = extractFlag('--csrf_token', command);
+  // A tokenless generic Windows AGY server is the CLI-style local server. The
+  // normal desktop/IDE path remains an `app`/`ide` match and still requires CSRF.
+  if (kind === 'app' && !csrfToken
+    && (lower.includes('language_server_win') || lower.includes('language-server-win'))) {
+    kind = 'cli';
+  }
+  if (!kind) return null;
   // Desktop app/IDE language servers authenticate local requests with
   // `--csrf_token`; tokenless matches are skipped so a later valid process can
   // still be used. The CLI language server exposes no token flag and needs none.
@@ -174,6 +192,7 @@ function parseProcessLine(line) {
     pid,
     kind,
     csrfToken: csrfToken || '',
+    httpsPort: extractPortFlag('--https_server_port', command),
     extensionPort: extractPortFlag('--extension_server_port', command),
     extensionCsrfToken: extractFlag('--extension_server_csrf_token', command),
     commandLine: command
@@ -229,7 +248,7 @@ function processInfosFromText(stdout) {
       continue;
     }
     const split = trimmed.indexOf(' ');
-    const lower = split === -1 ? '' : trimmed.slice(split + 1).trim().toLowerCase();
+    const lower = split === -1 ? '' : normalizeCommandForMatch(trimmed.slice(split + 1).trim());
     const kind = antigravityProcessKind(lower);
     if ((kind === 'app' || kind === 'ide') && !extractFlag('--csrf_token', trimmed)) {
       sawDesktopWithoutCsrf = true;
@@ -506,6 +525,9 @@ function collapsePools(models) {
 
 function endpointCandidates(processInfo, listenPorts) {
   const candidates = [];
+  if (processInfo.httpsPort) {
+    candidates.push({ scheme: 'https', port: processInfo.httpsPort, csrfToken: processInfo.csrfToken });
+  }
   for (const port of listenPorts) {
     candidates.push({ scheme: 'https', port, csrfToken: processInfo.csrfToken });
     candidates.push({ scheme: 'http',  port, csrfToken: processInfo.csrfToken });

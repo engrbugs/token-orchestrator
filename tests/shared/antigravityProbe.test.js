@@ -197,6 +197,42 @@ test('detectProcessInfo (win32) finds the agy.exe CLI when no IDE LS is running'
   assert.equal(info.csrfToken, '');
 });
 
+test('detectProcessInfo (win32) accepts the current generic AGY language server and its direct HTTPS port', async () => {
+  const stdout = '9002 C:\\Program Files\\Antigravity\\resources\\language_server_win_x64.exe --https_server_port 43123\n';
+  const info = await probe.detectProcessInfo({ platform: 'win32', spawn: fakeSpawn(stdout) });
+  assert.equal(info.kind, 'cli');
+  assert.equal(info.httpsPort, 43123);
+});
+
+test('parseProcessLine accepts WMI-quoted Windows paths with spaces (Antigravity IDE)', () => {
+  // WMI CommandLine quotes the executable when the path contains spaces. The
+  // close-quote sits immediately after .exe and used to break language_server
+  // / agy boundary regexes, so a signed-in IDE never registered as running.
+  const ideLine = [
+    '60360',
+    '"c:\\Users\\u\\AppData\\Local\\Programs\\Antigravity IDE\\resources\\app\\extensions\\antigravity\\bin\\language_server_windows_x64.exe"',
+    '--csrf_token ide-token',
+    '--extension_server_port 64657',
+    '--extension_server_csrf_token ext-token',
+    '--https_server_port 65338',
+    '--app_data_dir antigravity-ide',
+    '--subclient_type ide'
+  ].join(' ');
+  const info = probe._parseProcessLine(ideLine);
+  assert.equal(info.pid, 60360);
+  assert.equal(info.kind, 'ide');
+  assert.equal(info.csrfToken, 'ide-token');
+  assert.equal(info.httpsPort, 65338);
+  assert.equal(info.extensionPort, 64657);
+  assert.equal(info.extensionCsrfToken, 'ext-token');
+
+  const cliLine = '52712 "C:\\Users\\u\\AppData\\Local\\agy\\bin\\agy.exe"';
+  const cli = probe._parseProcessLine(cliLine);
+  assert.equal(cli.pid, 52712);
+  assert.equal(cli.kind, 'cli');
+  assert.equal(cli.csrfToken, '');
+});
+
 test('listeningPorts (posix) extracts ports from lsof output', async () => {
   const stdout = [
     'COMMAND     PID  USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME',

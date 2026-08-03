@@ -1,0 +1,94 @@
+'use strict';
+
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const http = require('node:http');
+const {
+  createAntigravityManagedAccount,
+  fetchAntigravityManagedLimits,
+  normalizeAntigravityManagedAccounts,
+  startAntigravityOAuthFlow
+} = require('../../src/shared/antigravityAccounts');
+
+function response(body, status = 200) {
+  return { ok: status >= 200 && status < 300, status, json: async () => body };
+}
+
+function fakeFetch() {
+  return async (url, init = {}) => {
+    if (url.includes('oauth2.googleapis.com')) return response({ access_token: `access-${init.body}` });
+    if (url.includes('userinfo')) return response({ email: 'agy@example.com' });
+    if (url.includes('loadCodeAssist')) return response({ cloudaicompanionProject: 'project-1' });
+    if (url.includes('retrieveUserQuota')) return response({ buckets: [
+      { modelId: 'models/gemini-3-pro', remainingFraction: 0.75, resetTime: '2027-01-01T00:00:00Z' },
+      { modelId: 'models/gemini-3-flash', remainingFraction: 0.9, resetTime: '2027-01-01T00:00:00Z' },
+      { modelId: 'models/claude-sonnet', remainingFraction: 0.8, resetTime: '2027-01-02T00:00:00Z' },
+      { modelId: 'models/gpt-oss', remainingFraction: 0.7, resetTime: '2027-01-01T12:00:00Z' }
+    ] });
+    throw new Error(`unexpected URL ${url}`);
+  };
+}
+
+test('managed Antigravity accounts normalize metadata without exposing credentials', () => {
+  const result = createAntigravityManagedAccount('refresh-token');
+  assert.equal(result.ok, true);
+  const metadata = normalizeAntigravityManagedAccounts([{ ...result.account, refreshToken: undefined }]);
+  assert.equal(metadata.length, 1);
+  assert.equal(metadata[0].refreshToken, '');
+});
+
+test('managed Antigravity account metadata keeps disabled accounts visible', () => {
+  const account = createAntigravityManagedAccount('refresh-token').account;
+  const metadata = normalizeAntigravityManagedAccounts([{ ...account, refreshToken: undefined, enabled: false }]);
+  assert.equal(metadata.length, 1);
+  assert.equal(metadata[0].enabled, false);
+});
+
+test('managed Antigravity limits fetch one provider per enabled account', async () => {
+  const one = createAntigravityManagedAccount('one').account;
+  const two = createAntigravityManagedAccount('two').account;
+  const providers = await fetchAntigravityManagedLimits([one, two], { fetch: fakeFetch(), now: () => 0 });
+  assert.equal(providers.length, 2);
+  assert.deepEqual(providers.map((provider) => provider.accountEmail), ['agy@example.com', 'agy@example.com']);
+  assert.deepEqual(providers[0].windows.map((window) => window.label), ['Gemini', 'Claude/GPT']);
+  assert.deepEqual(providers[0].windows.map((window) => Math.round(window.usedPercent)), [25, 30]);
+  assert.equal(providers[0].sourceDetail, 'managed');
+});
+
+test('managed Antigravity limits preserve per-account failure status', async () => {
+  const account = createAntigravityManagedAccount('bad').account;
+  const providers = await fetchAntigravityManagedLimits([account], {
+    fetch: async (url) => url.includes('oauth2.googleapis.com') ? response({}, 401) : response({})
+  });
+  assert.equal(providers[0].status, 'unauthorized');
+  assert.equal(providers[0].accountKey, account.accountKey);
+});
+
+test('managed Antigravity limits skip disabled accounts', async () => {
+  const account = createAntigravityManagedAccount('disabled').account;
+  const providers = await fetchAntigravityManagedLimits([{ ...account, enabled: false }], { fetch: fakeFetch() });
+  assert.deepEqual(providers, []);
+});
+
+test('Antigravity OAuth flow validates state and returns the refresh token', async () => {
+  let authorizationUrl;
+  const resultPromise = startAntigravityOAuthFlow({ port: 19991 }, {
+    fetch: async (url) => url.includes('oauth2.googleapis.com')
+      ? response({ access_token: 'access-token', refresh_token: 'refresh-token' })
+      : response({ email: 'oauth@example.com' }),
+    openExternal: async (url) => {
+      authorizationUrl = new URL(url);
+      await new Promise((resolve, reject) => {
+        http.get(`http://127.0.0.1:19991/callback?code=auth-code&state=${authorizationUrl.searchParams.get('state')}`, (res) => {
+          res.resume();
+          res.on('end', resolve);
+        }).on('error', reject);
+      });
+    }
+  });
+  const result = await resultPromise;
+  assert.match(authorizationUrl.searchParams.get('scope'), /cloud-platform/);
+  assert.match(authorizationUrl.searchParams.get('scope'), /cclog/);
+  assert.equal(result.refreshToken, 'refresh-token');
+  assert.equal(result.userInfo.email, 'oauth@example.com');
+});

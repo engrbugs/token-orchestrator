@@ -45,7 +45,7 @@ const { createDeviceRuntime } = require('../shared/deviceRuntime');
 const { customPricingPath } = require('../shared/tokscaleConfig');
 const { applyCustomPricing, normalizeCustomPricingSetting } = require('../shared/tokscaleCustomPricing');
 const { createHub } = require('../hub/server');
-const { claudeWebCookie, deepseekToken, fetchClaudeLimits, normalizeClaudeWebCookieInput, normalizeLimitsRefreshMs, parseBoolean, parseLimitProviders, runCodexLogin, minimaxToken, copilotToken, zaiToken, zaiRegion, zaiTeamToken, volcengineCredentials, qoderCookie, kimiToken, kimiWebToken, ollamaSessionCookie } = require('../shared/limitCollector');
+const { claudeWebCookie, deepseekToken, fetchClaudeLimits, fetchAntigravityLimits, normalizeAntigravityManagedAccounts, createAntigravityManagedAccount, startAntigravityOAuthFlow, normalizeClaudeWebCookieInput, normalizeLimitsRefreshMs, parseBoolean, parseLimitProviders, runCodexLogin, minimaxToken, copilotToken, zaiToken, zaiRegion, zaiTeamToken, volcengineCredentials, qoderCookie, kimiToken, kimiWebToken, ollamaSessionCookie } = require('../shared/limitCollector');
 const { fetchOllamaLimits, rememberOllamaValidation } = require('../shared/ollamaLimits');
 const { copilotLoginErrorMessage, isAllowedVerificationUrl, runCopilotDeviceFlowLogin } = require('../shared/copilotDeviceFlow');
 const {
@@ -68,6 +68,10 @@ const {
   readCodexAuthMaterial,
   writeCodexAuthFile
 } = require('../shared/codexSystemSwitch');
+const {
+  switchAntigravitySystemAccount: switchAntigravitySystemAccountCore
+} = require('../shared/antigravitySystemSwitch');
+const { refreshAccessToken: refreshAntigravityAccessToken } = require('../shared/antigravityAccounts');
 const {
   normalizeClientDisplayOrder,
   normalizeHiddenClients,
@@ -386,6 +390,7 @@ function defaultSettings() {
     ollamaCookie: '',
     codexManagedAccounts: [],
     mimoManagedAccounts: [],
+    antigravityManagedAccounts: [],
     appUpdate: {
       lastCheckedAt: null,
       lastKnownLatest: null,
@@ -486,7 +491,8 @@ function electronLimitsConfig() {
     env: process.env,
     defaultLimitProviders: defaultLimitProviders(),
     codexManagedAccounts: codexManagedAccountsForCollector(),
-    mimoManagedAccounts: mimoManagedAccountsForCollector()
+    mimoManagedAccounts: mimoManagedAccountsForCollector(),
+    antigravityManagedAccounts: antigravityManagedAccountsForCollector()
   });
 }
 
@@ -653,6 +659,8 @@ let codexWorkspaceSelection = null;
 let codexWorkspaceLabelHydrationPromise = null;
 let copilotLoginController = null;
 let copilotLoginFlowId = '';
+let antigravityLoginController = null;
+let antigravityLoginFlowId = '';
 const CODEX_WORKSPACE_LABEL_HYDRATION_CONCURRENCY = 3;
 
 // Startup label hydration is a small one-shot map. LimitsRuntime's bounded
@@ -868,6 +876,180 @@ function mimoManagedAccountsForCollector() {
     ...account,
     cookieHeader: readMimoCredential(account.id)
   })).filter((account) => account.cookieHeader);
+}
+
+function antigravityAccountsForRenderer() {
+  return normalizeAntigravityManagedAccounts(settings?.antigravityManagedAccounts).map(({
+    id, accountKey, accountEmail, accountLabel, addedAt, updatedAt, enabled
+  }) => ({ id, accountKey, accountEmail, accountLabel, addedAt, updatedAt, enabled }));
+}
+
+function antigravityManagedAccountsForCollector() {
+  return normalizeAntigravityManagedAccounts(settings?.antigravityManagedAccounts).map((account) => ({
+    ...account,
+    refreshToken: readAntigravityCredential(account.id)
+  })).filter((account) => account.refreshToken);
+}
+
+function writeAntigravityCredential(id, refreshToken) {
+  try { return ensureCredentialStore().writeAntigravityCredential(id, refreshToken); } catch (_) { return false; }
+}
+
+function readAntigravityCredential(id) {
+  try { return ensureCredentialStore().readAntigravityCredential(id); } catch (_) { return ''; }
+}
+
+function removeAntigravityCredential(id) {
+  try { return ensureCredentialStore().removeAntigravityCredential(id); } catch (_) { return false; }
+}
+
+async function addAntigravityManagedAccount(refreshToken) {
+  const accounts = normalizeAntigravityManagedAccounts(settings?.antigravityManagedAccounts)
+    .map((account) => ({ ...account, refreshToken: readAntigravityCredential(account.id) }));
+  const result = createAntigravityManagedAccount(refreshToken, accounts);
+  if (!result.ok) return result;
+  const [validation] = await fetchAntigravityLimits({ antigravityManagedAccounts: [result.account] });
+  if (validation?.status !== 'ok') {
+    return { ok: false, errorCode: validation?.status === 'unauthorized' ? 'invalidRefreshToken' : 'validationUnavailable' };
+  }
+  result.account.accountEmail = String(validation.accountEmail || validation.accountLabel || '').trim().slice(0, 254);
+  result.account.accountKey = validation.accountKey || result.account.accountKey;
+  const previousToken = readAntigravityCredential(result.account.id);
+  if (!writeAntigravityCredential(result.account.id, result.account.refreshToken)) {
+    return { ok: false, errorCode: 'credentialStorageUnavailable' };
+  }
+  const cleanAccount = { ...result.account };
+  delete cleanAccount.refreshToken;
+  settings.antigravityManagedAccounts = normalizeAntigravityManagedAccounts([
+    ...accounts.filter((account) => account.accountKey !== cleanAccount.accountKey),
+    cleanAccount
+  ]);
+  try {
+    saveSettings({ throwOnError: true });
+  } catch (_) {
+    if (previousToken) writeAntigravityCredential(result.account.id, previousToken);
+    else removeAntigravityCredential(result.account.id);
+    return { ok: false, errorCode: 'credentialStorageUnavailable' };
+  }
+  pushSettingsToRenderer();
+  void queueLimitInvalidation({ provider: 'antigravity', accountId: cleanAccount.id, accountKey: cleanAccount.accountKey }, 'account-added');
+  return { ok: true, accounts: antigravityAccountsForRenderer() };
+}
+
+async function signInAntigravityAccount(flowId = '') {
+  if (antigravityLoginController) return { ok: false, error: 'An Antigravity sign-in is already in progress.', flowId };
+  const controller = new AbortController();
+  antigravityLoginController = controller;
+  antigravityLoginFlowId = flowId;
+  try {
+    const result = await startAntigravityOAuthFlow({ signal: controller.signal }, {
+      openExternal: (url) => shell.openExternal(url),
+      fetch
+    });
+    const saved = await addAntigravityManagedAccount(result.refreshToken);
+    if (!saved.ok) {
+      return {
+        ...saved,
+        flowId,
+        error: saved.errorCode === 'invalidRefreshToken'
+          ? 'Google sign-in succeeded, but Antigravity rejected access to its quota API.'
+          : saved.errorCode === 'credentialStorageUnavailable'
+            ? 'Google sign-in succeeded, but the account could not be stored securely.'
+            : 'Google sign-in succeeded, but Antigravity quota validation failed. Check your network connection and try again.'
+      };
+    }
+    return { ...saved, flowId };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error?.code === 'cancelled' ? 'Sign-in cancelled.' : error?.message || 'Could not complete Google sign-in.',
+      flowId
+    };
+  } finally {
+    if (antigravityLoginController === controller) {
+      antigravityLoginController = null;
+      antigravityLoginFlowId = '';
+    }
+  }
+}
+
+function cancelAntigravitySignIn(flowId = '') {
+  if (flowId && antigravityLoginFlowId && flowId !== antigravityLoginFlowId) return { ok: true, cancelled: false };
+  if (!antigravityLoginController) return { ok: true, cancelled: false };
+  antigravityLoginController.abort();
+  return { ok: true, cancelled: true };
+}
+
+async function removeAntigravityManagedAccount(id) {
+  const accountId = String(id || '').trim();
+  const accounts = normalizeAntigravityManagedAccounts(settings.antigravityManagedAccounts);
+  const account = accounts.find((entry) => entry.id === accountId);
+  if (!account) return { ok: false, error: 'Account not found' };
+  const previousToken = readAntigravityCredential(accountId);
+  if (!removeAntigravityCredential(accountId)) return { ok: false, error: 'Could not remove stored credential' };
+  settings.antigravityManagedAccounts = accounts.filter((entry) => entry.id !== accountId);
+  try { saveSettings({ throwOnError: true }); }
+  catch (_) { if (previousToken) writeAntigravityCredential(accountId, previousToken); return { ok: false, error: 'Could not persist account removal' }; }
+  pushSettingsToRenderer();
+  void queueLimitInvalidation({ provider: 'antigravity', accountId, accountKey: account.accountKey }, 'account-removed', { clear: true, refresh: false });
+  return { ok: true, accounts: antigravityAccountsForRenderer() };
+}
+
+function setAntigravityManagedAccountEnabled(id, enabled) {
+  const accountId = String(id || '').trim();
+  const accounts = normalizeAntigravityManagedAccounts(settings.antigravityManagedAccounts);
+  const account = accounts.find((entry) => entry.id === accountId);
+  if (!account) return { ok: false, error: 'Account not found' };
+  account.enabled = Boolean(enabled);
+  account.updatedAt = new Date().toISOString();
+  settings.antigravityManagedAccounts = accounts;
+  try { saveSettings({ throwOnError: true }); }
+  catch (_) { return { ok: false, error: 'Could not persist account state' }; }
+  pushSettingsToRenderer();
+  void queueLimitInvalidation({ provider: 'antigravity', accountId, accountKey: account.accountKey }, 'account-state', { clear: !account.enabled, refresh: account.enabled });
+  return { ok: true, accounts: antigravityAccountsForRenderer() };
+}
+
+async function switchAntigravitySystemAccount(id) {
+  const accountId = String(id || '').trim();
+  const accounts = normalizeAntigravityManagedAccounts(settings.antigravityManagedAccounts);
+  const account = accounts.find((entry) => entry.id === accountId);
+  if (!account) return { ok: false, error: 'Account not found' };
+  if (account.enabled === false) return { ok: false, error: 'Account is disabled' };
+  const refreshToken = readAntigravityCredential(accountId);
+  if (!refreshToken) return { ok: false, error: 'Stored Antigravity credential is missing. Remove and re-add the account.' };
+
+  try {
+    const result = await switchAntigravitySystemAccountCore({
+      refreshToken,
+      email: account.accountEmail || account.accountLabel || '',
+      name: account.accountLabel || account.accountEmail || ''
+    }, {
+      refreshAccessToken: refreshAntigravityAccessToken
+    });
+
+    // Google may rotate the refresh token during the switch exchange.
+    if (result.refreshToken && result.refreshToken !== refreshToken) {
+      writeAntigravityCredential(accountId, result.refreshToken);
+    }
+
+    void queueLimitInvalidation({ provider: 'antigravity' }, 'system-account-switch');
+    const accountsForRenderer = antigravityAccountsForRenderer();
+    const activeAccount = accountsForRenderer.find((entry) => entry.id === accountId) || null;
+    return {
+      ok: true,
+      restarted: Boolean(result.restarted),
+      warning: result.warning || '',
+      activeAccountId: accountId,
+      activeAccount,
+      accounts: accountsForRenderer
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error?.message || 'Could not switch the local Antigravity account.'
+    };
+  }
 }
 
 function legacyMimoCredentialPath(id) {
@@ -1985,6 +2167,7 @@ function readSettings() {
     }
     merged.codexManagedAccounts = normalizeCodexManagedAccounts(merged.codexManagedAccounts);
     merged.mimoManagedAccounts = normalizeMimoManagedAccounts(merged.mimoManagedAccounts);
+    merged.antigravityManagedAccounts = normalizeAntigravityManagedAccounts(merged.antigravityManagedAccounts);
     if (saved.windowBehavior === undefined && saved.alwaysOnTop !== undefined) {
       merged.windowBehavior = saved.alwaysOnTop ? 'floating' : 'normal';
     }
@@ -3018,6 +3201,7 @@ function settingsForRenderer() {
     thirdPartyEnvConfigured: thirdPartyLimits.configuredAccounts({}, { env: process.env }).length > 0,
     codexManagedAccounts: codexAccountsForRenderer(),
     mimoManagedAccounts: mimoAccountsForRenderer(),
+    antigravityManagedAccounts: antigravityAccountsForRenderer(),
     claudeWebCookieConfigured: Boolean(currentClaudeWebCookie()),
     claudeWebCookieSource,
     deepseekApiKeyConfigured: Boolean(currentDeepSeekApiKey()),
@@ -4673,6 +4857,13 @@ app.whenReady().then(() => {
     .catch((error) => ({ ok: false, error: error.message })));
   ipcMain.handle('mimo:setAccountEnabled', (_event, id, enabled) => setMimoManagedAccountEnabled(id, enabled));
   ipcMain.handle('mimo:removeAccount', async (_event, id) => removeMimoManagedAccount(id));
+  ipcMain.handle('antigravity:accounts', () => antigravityAccountsForRenderer());
+  ipcMain.handle('antigravity:signIn', (_event, request = {}) => signInAntigravityAccount(String(request?.flowId || '').trim()));
+  ipcMain.handle('antigravity:cancelSignIn', (_event, request = {}) => cancelAntigravitySignIn(String(request?.flowId || '').trim()));
+  ipcMain.handle('antigravity:addAccount', (_event, refreshToken) => addAntigravityManagedAccount(refreshToken));
+  ipcMain.handle('antigravity:removeAccount', (_event, id) => removeAntigravityManagedAccount(id));
+  ipcMain.handle('antigravity:setAccountEnabled', (_event, id, enabled) => setAntigravityManagedAccountEnabled(id, enabled));
+  ipcMain.handle('antigravity:switchSystemAccount', async (_event, id) => switchAntigravitySystemAccount(id));
   ipcMain.handle('tokscale:getStatus', () => getTokscaleStatus());
   ipcMain.handle('tokscale:checkNpm', () => checkTokscaleNpm());
   ipcMain.handle('tokscale:downloadFromNpm', () => downloadTokscaleFromNpm());

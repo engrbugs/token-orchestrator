@@ -328,45 +328,54 @@ test('Codex account email masking is an opt-in display-only setting', () => {
 test('Codex system account switching is exposed from limits account rows', () => {
   const app = readRendererFile('app.js');
   const renderHead = functionBody(app, 'renderLimitProviderHead', 'renderProviderWindows');
-  assert.match(renderHead, /if \(activeCodexAccount\)/);
+  assert.match(renderHead, /else if \(activeSystemAccount\)/);
   assert.doesNotMatch(renderHead, /showActiveAccount/);
   assert.match(renderHead, /activeZone\.className = 'limit-account-active-zone'/);
   assert.match(renderHead, /activePopover\.className = 'limit-account-active-popover'/);
-  assert.match(renderHead, /const activeHint = t\('limits\.codex\.activeAccountHint'\)/);
+  assert.match(renderHead, /'limits\.codex\.activeAccountHint'/);
+  assert.match(renderHead, /'limits\.antigravity\.activeAccountHint'/);
   assert.match(renderHead, /activePopover\.textContent = activeHint/);
-  assert.match(renderHead, /activeZone\.addEventListener\('pointerenter', markCodexActiveHintOpened\)/);
-  assert.match(renderHead, /activeZone\.addEventListener\('focusin', markCodexActiveHintOpened\)/);
-  assert.match(renderHead, /activeZone\.addEventListener\('pointerleave', releaseCodexActiveHint\)/);
-  assert.match(renderHead, /activeZone\.addEventListener\('focusout', releaseCodexActiveHint\)/);
+  assert.match(renderHead, /activeZone\.addEventListener\('pointerenter', markActiveHintOpened\)/);
+  assert.match(renderHead, /activeZone\.addEventListener\('focusin', markActiveHintOpened\)/);
+  assert.match(renderHead, /activeZone\.addEventListener\('pointerleave', releaseActiveHint\)/);
+  assert.match(renderHead, /activeZone\.addEventListener\('focusout', releaseActiveHint\)/);
   assert.match(renderHead, /activeZone\.matches\(':hover, :focus-within'\)/);
   assert.match(renderHead, /activeZone\.append\(title, badge, activePopover\)/);
   assert.match(renderHead, /badge\.textContent = '\\u2713';/);
   assert.doesNotMatch(renderHead, /badge\.textContent = 'Active'/);
-  // The ✓ tracks state.codexActiveAccount only (the account THIS device's Codex
-  // is signed into). It must NOT re-derive "live" from the row being rendered:
-  // in sync mode that row can be a remote device's record for a different account.
-  assert.match(renderHead, /options\.showActiveBadge && codexActiveAccountMatchesProvider\(provider\)/);
+  // The ✓ tracks the local active account only. It must NOT re-derive "live"
+  // from the row being rendered: in sync mode that row can be a remote
+  // device's record for a different account.
+  assert.match(renderHead, /options\.showActiveBadge && \(/);
+  assert.match(renderHead, /codexActiveAccountMatchesProvider\(provider\)/);
+  assert.match(renderHead, /antigravityActiveAccountMatchesProvider\(provider\)/);
   assert.doesNotMatch(renderHead, /!state\.codexActiveAccount && liveCodexAccount/);
   assert.doesNotMatch(renderHead, /const liveCodexAccount =/);
   assert.match(renderHead, /codexSwitchAccountForProvider\(provider\)/);
+  assert.match(renderHead, /antigravitySwitchAccountForProvider\(provider\)/);
   assert.match(renderHead, /switchZone\.className = 'limit-account-switch-zone'/);
   assert.match(renderHead, /switchPopover\.className = 'limit-account-switch-popover'/);
   assert.match(renderHead, /switchButton\.className = 'limit-account-switch-button'/);
-  assert.match(renderHead, /switchZone\.classList\.toggle\('has-opened', state\.codexSwitchPopoverHasOpened\)/);
-  assert.match(renderHead, /state\.codexSwitchPopoverHasOpened = true;/);
-  assert.match(renderHead, /state\.codexSwitchPopoverActive = true;/);
-  assert.match(renderHead, /switchZone\.addEventListener\('pointerenter', markCodexSwitchPopoverOpened\)/);
-  assert.match(renderHead, /switchZone\.addEventListener\('focusin', markCodexSwitchPopoverOpened\)/);
-  assert.match(renderHead, /switchZone\.addEventListener\('pointerleave', releaseCodexSwitchPopover\)/);
-  assert.match(renderHead, /switchZone\.addEventListener\('focusout', releaseCodexSwitchPopover\)/);
+  assert.match(renderHead, /switchZone\.classList\.toggle\('has-opened', state\[popoverOpenedKey\]\)/);
+  assert.match(renderHead, /state\[popoverOpenedKey\] = true;/);
+  assert.match(renderHead, /state\[popoverActiveKey\] = true;/);
+  assert.match(renderHead, /switchZone\.addEventListener\('pointerenter', markSwitchPopoverOpened\)/);
+  assert.match(renderHead, /switchZone\.addEventListener\('focusin', markSwitchPopoverOpened\)/);
+  assert.match(renderHead, /switchZone\.addEventListener\('pointerleave', releaseSwitchPopover\)/);
+  assert.match(renderHead, /switchZone\.addEventListener\('focusout', releaseSwitchPopover\)/);
   assert.match(renderHead, /switchZone\.matches\(':hover, :focus-within'\)/);
-  assert.match(renderHead, /state\.codexSwitchPopoverActive = false;/);
+  assert.match(renderHead, /state\[popoverActiveKey\] = false;/);
   assert.match(renderHead, /switchZone\.append\(title, switchPopover\)/);
-  assert.match(renderHead, /window\.tokenMonitor\.codex\.switchSystemAccount\(switchAccount\.id\)/);
+  assert.match(renderHead, /window\.tokenMonitor\?\.codex\?\.switchSystemAccount/);
+  assert.match(renderHead, /window\.tokenMonitor\?\.antigravity\?\.switchSystemAccount/);
+  assert.match(renderHead, /const result = await switchApi\(switchAccount\.id\)/);
   assert.match(renderHead, /state\.codexActiveAccount = result\.activeAccount/);
+  assert.match(renderHead, /state\.antigravityActiveAccount = result\.activeAccount/);
   assert.match(renderHead, /window\.tokenMonitor\.codex\.refreshAccountLimits\(switchAccount\.id\)/);
   assert.match(renderHead, /applyCodexAccountLimitsRefresh\(refreshResult\.providers \|\| \[\]\)/);
-  assert.doesNotMatch(renderHead, /refreshStats\(\{ force: true \}/);
+  // Antigravity switch restarts the IDE, so it refreshes full stats instead of
+  // a scoped Codex account limits refresh.
+  assert.match(renderHead, /refreshStats\(\{ force: true \}/);
   assert.doesNotMatch(renderHead, /titleButton\.className = 'limit-account-title-button'/);
 
   const group = functionBody(app, 'renderCodexAccountGroup', 'renderOpenCodeAccountGroup');
@@ -450,11 +459,13 @@ test('Codex system account switching is exposed from limits account rows', () =>
   const limitsRefreshBody = functionBody(app, 'applyCodexAccountLimitsRefresh', 'renderLimitProviderHead');
   assert.match(limitsRefreshBody, /applyCodexActiveAccountFromStats\(\);/);
   assert.match(renderHead, /setCodexPendingActiveAccount\(result\.activeAccount \|\| null\);/);
-  const switchHold = functionBody(app, 'codexSwitchPopoverShouldHoldRender', 'flushPendingCodexSwitchPopoverRender');
-  const switchFlush = functionBody(app, 'flushPendingCodexSwitchPopoverRender', 'codexResetCreditsNode');
+  const switchHold = functionBody(app, 'systemSwitchPopoverShouldHoldRender', 'flushPendingSystemSwitchPopoverRender');
+  const switchFlush = functionBody(app, 'flushPendingSystemSwitchPopoverRender', 'codexResetCreditsNode');
   assert.match(switchHold, /state\.codexSwitchPopoverActive/);
+  assert.match(switchHold, /state\.antigravitySwitchPopoverActive/);
   assert.match(switchHold, /\.limit-account-switch-zone:hover, \.limit-account-switch-zone:focus-within, \.limit-account-active-zone:hover, \.limit-account-active-zone:focus-within/);
   assert.match(switchFlush, /state\.codexSwitchPopoverRenderPending/);
+  assert.match(switchFlush, /state\.antigravitySwitchPopoverRenderPending/);
   assert.match(switchFlush, /state\.breakdown !== 'limits'/);
   assert.match(switchFlush, /renderLimits\(\)/);
   const switchBody = functionBody(main, 'switchCodexSystemAccount', 'refreshCodexManagedAccountLimits');
@@ -493,10 +504,17 @@ test('Codex system account switching is exposed from limits account rows', () =>
     renderLimits,
     /renderLimitProviderRow\(id, label, provider, color, id === 'codex' \? \{[\s\S]*?showActiveBadge: true/
   );
-  assert.match(renderLimits, /const holdCodexSwitchPopoverRender = codexSwitchPopoverShouldHoldRender\(\);/);
-  assert.match(renderLimits, /holdLimitDetailTooltipRender \|\| holdCodexSwitchPopoverRender/);
-  assert.match(renderLimits, /if \(holdCodexSwitchPopoverRender\) state\.codexSwitchPopoverRenderPending = true;/);
+  assert.match(renderLimits, /const holdSystemSwitchPopoverRender = systemSwitchPopoverShouldHoldRender\(\);/);
+  assert.match(renderLimits, /holdLimitDetailTooltipRender \|\| holdSystemSwitchPopoverRender/);
+  assert.match(renderLimits, /if \(state\.codexSwitchPopoverActive\) state\.codexSwitchPopoverRenderPending = true;/);
+  assert.match(renderLimits, /if \(state\.antigravitySwitchPopoverActive\) state\.antigravitySwitchPopoverRenderPending = true;/);
   assert.match(renderLimits, /state\.codexSwitchPopoverRenderPending = false;/);
+  assert.match(renderLimits, /state\.antigravitySwitchPopoverRenderPending = false;/);
+  assert.match(app, /window\.tokenMonitor\?\.antigravity\?\.switchSystemAccount/);
+  assert.match(app, /allowSystemSwitch: true,\s*showActiveBadge: true/s);
+  assert.match(main, /ipcMain\.handle\('antigravity:switchSystemAccount'/);
+  assert.match(main, /switchAntigravitySystemAccount\(id\)/);
+  assert.match(preload, /switchSystemAccount: \(id\) => ipcRenderer\.invoke\('antigravity:switchSystemAccount', id\)/);
 });
 
 test('DeepSeek account panel provides a first-class API key entry', () => {

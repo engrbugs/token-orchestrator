@@ -72,6 +72,15 @@ contextBridge.exposeInMainWorld('tokenMonitor', {
       return () => ipcRenderer.removeListener('mimo:accounts', handler);
     }
   },
+  antigravity: {
+    accounts: () => ipcRenderer.invoke('antigravity:accounts'),
+    signIn: (request = {}) => ipcRenderer.invoke('antigravity:signIn', request),
+    cancelSignIn: (request = {}) => ipcRenderer.invoke('antigravity:cancelSignIn', request),
+    addAccount: (refreshToken) => ipcRenderer.invoke('antigravity:addAccount', refreshToken),
+    removeAccount: (id) => ipcRenderer.invoke('antigravity:removeAccount', id),
+    setAccountEnabled: (id, enabled) => ipcRenderer.invoke('antigravity:setAccountEnabled', id, enabled),
+    switchSystemAccount: (id) => ipcRenderer.invoke('antigravity:switchSystemAccount', id)
+  },
   exportNow: () => ipcRenderer.invoke('export:now'),
   pickExportDir: () => ipcRenderer.invoke('export:pickAutoDir'),
   getTokscaleStatus: () => ipcRenderer.invoke('tokscale:getStatus'),

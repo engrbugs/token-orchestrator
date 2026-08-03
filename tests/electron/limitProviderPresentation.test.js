@@ -864,7 +864,7 @@ test('Codex renders manual reset credits below session and weekly windows', () =
   assert.match(codexResetCreditsNode, /aria-label/);
   assert.match(limitDetailTooltipShouldHoldRender, /state\.limitDetailTooltipActive/);
   assert.match(renderLimits, /const holdLimitDetailTooltipRender = limitDetailTooltipShouldHoldRender\(\);/);
-  assert.match(renderLimits, /if \(holdLimitDetailTooltipRender \|\| holdCodexSwitchPopoverRender\)/);
+  assert.match(renderLimits, /if \(holdLimitDetailTooltipRender \|\| holdSystemSwitchPopoverRender\)/);
   assert.match(styles, /\.limit-reset-credits\s*\{[^}]*min-height: 11px;[^}]*font-size: 9px;/s);
   assert.match(styles, /\.limit-reset-credits-line\s*\{[^}]*justify-content: space-between;/s);
   assert.match(styles, /\.limit-reset-credits-expiry-group\s*\{[^}]*flex: 0 0 auto;/s);

@@ -118,6 +118,28 @@ test('aggregateLimits keeps distinct Claude accounts and dedupes each one across
   );
 });
 
+test('aggregateLimits keeps distinct managed Antigravity accounts', () => {
+  const provider = (accountKey, email, remainingPercent) => ({
+    provider: 'antigravity',
+    accountKey,
+    accountEmail: email,
+    accountLabel: email,
+    status: 'ok',
+    source: 'api',
+    sourceDetail: 'managed',
+    updatedAt: '2026-08-03T12:00:00.000Z',
+    windows: [{ kind: 'weekly', label: 'Gemini', remainingPercent }]
+  });
+  const aggregate = aggregateLimits([{ deviceId: 'device-1', limits: { providers: [
+    provider('agy-a', 'a@example.com', 80),
+    provider('agy-b', 'b@example.com', 60)
+  ] } }]);
+  assert.deepEqual(
+    aggregate.providers.filter((entry) => entry.provider === 'antigravity').map((entry) => entry.accountKey),
+    ['agy-a', 'agy-b']
+  );
+});
+
 test('aggregateLimits preserves distinct Codex accounts by hashed account key', () => {
   const aggregate = aggregateLimits([
     {

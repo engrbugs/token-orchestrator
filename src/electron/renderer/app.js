@@ -93,6 +93,7 @@ const LIMIT_PROVIDER_ACCOUNT_GROUP_IDS = {
   codex: 'codexAccountGroup',
   opencode: 'opencodeCookieGroup',
   cursor: 'cursorAccountGroup',
+  antigravity: 'antigravityAccountGroup',
   kimi: 'kimiAccountGroup',
   copilot: 'copilotAccountGroup',
   mimo: 'mimoAccountGroup',
@@ -111,6 +112,7 @@ const LIMIT_PROVIDER_ACCOUNT_STATUS_IDS = {
   codex: 'codexAccountStatus',
   opencode: 'opencodeCookieStatus',
   cursor: 'cursorAccountStatus',
+  antigravity: 'antigravityAccountStatus',
   kimi: 'kimiAccountStatus',
   copilot: 'copilotApiTokenStatus',
   mimo: 'mimoAccountStatus',
@@ -285,7 +287,7 @@ function normalizeInitialViewValue(value, allowed, fallback) {
   return allowed.has(raw) ? raw : fallback;
 }
 
-const state = { period: normalizeInitialViewValue(initialViewState.period, viewPeriodValues, 'today'), appUpdate: null, breakdown: normalizeInitialViewValue(initialViewState.breakdown, viewBreakdownValues, 'home'), viewSwitcherOpen: false, viewSwitcherHasOpened: false, limitDetailTooltipHasOpened: false, limitDetailTooltipActive: false, limitDetailTooltipRenderPending: false, settings: null, stats: null, homeHistory: null, homeHistoryBusy: false, homeHistoryRequested: false, homeHistorySignature: '', homeHistoryRetries: 0, homeHistoryRetryTimer: null, homeActivityScrollLeft: null, homeActivityFollowEnd: true, homeActivityResizeObserver: null, serviceStatus: null, serviceStatusBusy: false, serviceProvidersExpanded: false, trendSettingsExpanded: false, trendsActivating: false, homeSettingsExpanded: false, homeLimitSettingsExpanded: false, limitProviderSettingsExpanded: '', serviceStatusTicker: null, refreshTimer: null, refreshBusy: false, refreshFeedbackTimer: null, currentTotal: 0, rowSignature: '', streamConnected: false, streamFailure: null, mode: 'idle', appInfo: null, tokscaleStatus: null, tokscaleCheck: null, tokscaleBusy: false, hubInfo: null, cursorAccount: { status: null, error: '' }, cursorAccountExpanded: false, codexAccountExpanded: false, codexAccountError: '', codexSignInBusy: false, codexSignInFlowId: '', codexLoginUrl: '', codexLoginStatus: '', codexLoginOutput: '', codexWorkspaceChoices: [], codexWorkspaceId: '', codexActiveAccount: null, codexPendingActiveAccount: null, codexPendingActiveAccountUntil: 0, codexPendingActiveAccountTimer: null, codexSystemSwitchingAccountId: '', codexSystemSwitchErrorAccountId: '', codexSystemSwitchError: '', codexSwitchPopoverHasOpened: false, codexSwitchPopoverActive: false, codexSwitchPopoverRenderPending: false, customPricingExpanded: false, claudeAccountExpanded: false, claudePendingCheckSince: 0, opencodeProfileCount: 0, opencodeCookieExpanded: false, openrouterProfileCount: 0, openrouterAccountExpanded: false, thirdPartyProfileCount: 0, thirdPartyAccountExpanded: false, deepseekAccountExpanded: false, deepseekPendingCheckSince: 0, minimaxAccountExpanded: false, minimaxPendingCheckSince: 0, zaiAccountExpanded: false, zaiPendingCheckSince: 0, zaiteamAccountExpanded: false, zaiteamPendingCheckSince: 0, volcengineAccountExpanded: false, volcenginePendingCheckSince: 0, qoderAccountExpanded: false, qoderPendingCheckSince: 0, kimiAccountExpanded: false, kimiPendingCheckSince: 0, ollamaAccountExpanded: false, ollamaPendingCheckSince: 0, mimoAccountExpanded: false, mimoAccountError: '', copilotAccountExpanded: false, copilotManualExpanded: false, copilotPendingCheckSince: 0, copilotSignInBusy: false, copilotSignInCancelable: false, copilotSignInFlowId: '', copilotAuthorizeMessage: '', copilotLoginStatus: '', copilotErrorMessage: '', floatingBubble: initialFloatingBubble, suppressInitialNumberAnimation: window.__TOKEN_MONITOR_SUPPRESS_INITIAL_NUMBER_ANIMATION__ === true, openSession: null, detailSort: 'time', recordingWindowShortcut: false, windowShortcutInvalid: false };
+const state = { period: normalizeInitialViewValue(initialViewState.period, viewPeriodValues, 'today'), appUpdate: null, breakdown: normalizeInitialViewValue(initialViewState.breakdown, viewBreakdownValues, 'home'), viewSwitcherOpen: false, viewSwitcherHasOpened: false, limitDetailTooltipHasOpened: false, limitDetailTooltipActive: false, limitDetailTooltipRenderPending: false, settings: null, stats: null, homeHistory: null, homeHistoryBusy: false, homeHistoryRequested: false, homeHistorySignature: '', homeHistoryRetries: 0, homeHistoryRetryTimer: null, homeActivityScrollLeft: null, homeActivityFollowEnd: true, homeActivityResizeObserver: null, serviceStatus: null, serviceStatusBusy: false, serviceProvidersExpanded: false, trendSettingsExpanded: false, trendsActivating: false, homeSettingsExpanded: false, homeLimitSettingsExpanded: false, limitProviderSettingsExpanded: '', serviceStatusTicker: null, refreshTimer: null, refreshBusy: false, refreshFeedbackTimer: null, currentTotal: 0, rowSignature: '', streamConnected: false, streamFailure: null, mode: 'idle', appInfo: null, tokscaleStatus: null, tokscaleCheck: null, tokscaleBusy: false, hubInfo: null, cursorAccount: { status: null, error: '' }, cursorAccountExpanded: false, codexAccountExpanded: false, codexAccountError: '', codexSignInBusy: false, codexSignInFlowId: '', codexLoginUrl: '', codexLoginStatus: '', codexLoginOutput: '', codexWorkspaceChoices: [], codexWorkspaceId: '', codexActiveAccount: null, codexPendingActiveAccount: null, codexPendingActiveAccountUntil: 0, codexPendingActiveAccountTimer: null, codexSystemSwitchingAccountId: '', codexSystemSwitchErrorAccountId: '', codexSystemSwitchError: '', codexSwitchPopoverHasOpened: false, codexSwitchPopoverActive: false, codexSwitchPopoverRenderPending: false, antigravityAccountExpanded: false, antigravityAccountError: '', antigravityLoginFlowId: '', antigravityActiveAccount: null, antigravityPendingActiveAccount: null, antigravityPendingActiveAccountUntil: 0, antigravityPendingActiveAccountTimer: null, antigravitySystemSwitchingAccountId: '', antigravitySystemSwitchErrorAccountId: '', antigravitySystemSwitchError: '', antigravitySwitchPopoverHasOpened: false, antigravitySwitchPopoverActive: false, antigravitySwitchPopoverRenderPending: false, customPricingExpanded: false, claudeAccountExpanded: false, claudePendingCheckSince: 0, opencodeProfileCount: 0, opencodeCookieExpanded: false, openrouterProfileCount: 0, openrouterAccountExpanded: false, thirdPartyProfileCount: 0, thirdPartyAccountExpanded: false, deepseekAccountExpanded: false, deepseekPendingCheckSince: 0, minimaxAccountExpanded: false, minimaxPendingCheckSince: 0, zaiAccountExpanded: false, zaiPendingCheckSince: 0, zaiteamAccountExpanded: false, zaiteamPendingCheckSince: 0, volcengineAccountExpanded: false, volcenginePendingCheckSince: 0, qoderAccountExpanded: false, qoderPendingCheckSince: 0, kimiAccountExpanded: false, kimiPendingCheckSince: 0, ollamaAccountExpanded: false, ollamaPendingCheckSince: 0, mimoAccountExpanded: false, mimoAccountError: '', copilotAccountExpanded: false, copilotManualExpanded: false, copilotPendingCheckSince: 0, copilotSignInBusy: false, copilotSignInCancelable: false, copilotSignInFlowId: '', copilotAuthorizeMessage: '', copilotLoginStatus: '', copilotErrorMessage: '', floatingBubble: initialFloatingBubble, suppressInitialNumberAnimation: window.__TOKEN_MONITOR_SUPPRESS_INITIAL_NUMBER_ANIMATION__ === true, openSession: null, detailSort: 'time', recordingWindowShortcut: false, windowShortcutInvalid: false };
 state.homeHistoryLoadedSignature = '';
 state.homeHistoryRetrySignature = '';
 state.homeReturnVisible = false;
@@ -2233,16 +2235,20 @@ function flushPendingLimitDetailTooltipRender() {
   renderLimits();
 }
 
-function codexSwitchPopoverShouldHoldRender() {
-  if (!state.codexSwitchPopoverActive || !els.limitsPanel) return false;
+function systemSwitchPopoverShouldHoldRender() {
+  if ((!state.codexSwitchPopoverActive && !state.antigravitySwitchPopoverActive) || !els.limitsPanel) return false;
   return Boolean(els.limitsPanel.querySelector(
     '.limit-account-switch-zone:hover, .limit-account-switch-zone:focus-within, .limit-account-active-zone:hover, .limit-account-active-zone:focus-within'
   ));
 }
 
-function flushPendingCodexSwitchPopoverRender() {
-  if (!state.codexSwitchPopoverRenderPending || state.breakdown !== 'limits') return;
+function flushPendingSystemSwitchPopoverRender() {
+  if (
+    !(state.codexSwitchPopoverRenderPending || state.antigravitySwitchPopoverRenderPending)
+    || state.breakdown !== 'limits'
+  ) return;
   state.codexSwitchPopoverRenderPending = false;
+  state.antigravitySwitchPopoverRenderPending = false;
   renderLimits();
 }
 
@@ -2652,6 +2658,109 @@ function codexSwitchAccountForProvider(provider) {
   }) || null;
 }
 
+function antigravityEmailsMatch(left, right) {
+  const a = String(left || '').trim().toLowerCase();
+  const b = String(right || '').trim().toLowerCase();
+  return Boolean(a && b && a === b);
+}
+
+function antigravitySwitchAccountForProvider(provider) {
+  if (!provider || provider.provider !== 'antigravity') return null;
+  if (!provider.accountKey && !provider.accountEmail) return null;
+  return (state.settings?.antigravityManagedAccounts || []).find((account) => {
+    if (account.enabled === false) return false;
+    const key = String(account.accountKey || '').trim();
+    const providerKey = String(provider.accountKey || '').trim();
+    if (key && providerKey && key === providerKey) return true;
+    return antigravityEmailsMatch(account.accountEmail || account.accountLabel, provider.accountEmail);
+  }) || null;
+}
+
+function antigravityActiveAccountMatchesProvider(provider) {
+  if (!provider || provider.provider !== 'antigravity' || !state.antigravityActiveAccount) return false;
+  const active = state.antigravityActiveAccount;
+  const activeKey = String(active.accountKey || '').trim();
+  const providerKey = String(provider.accountKey || '').trim();
+  if (activeKey && providerKey && activeKey === providerKey) return true;
+  return antigravityEmailsMatch(active.email || active.accountEmail, provider.accountEmail);
+}
+
+function localLiveAntigravityProvider() {
+  const localProviders = accountIdentityApi.localDeviceLimitsProviders(state.stats, state.settings?.deviceId || '');
+  const providers = Array.isArray(localProviders)
+    ? localProviders
+    : (state.stats?.limits?.providers || []);
+  return (providers || []).find((provider) => (
+    provider?.provider === 'antigravity'
+    && provider.source === 'rpc'
+    && (provider.status === 'ok' || provider.stale)
+    && (provider.accountEmail || provider.accountKey)
+  )) || null;
+}
+
+function antigravityActiveAccountFromStats() {
+  const provider = localLiveAntigravityProvider();
+  if (!provider) return null;
+  return {
+    id: antigravitySwitchAccountForProvider(provider)?.id || '',
+    email: provider.accountEmail || '',
+    accountKey: provider.accountKey || '',
+    accountLabel: provider.accountLabel || ''
+  };
+}
+
+function clearAntigravityPendingActiveAccount() {
+  if (state.antigravityPendingActiveAccountTimer) {
+    clearTimeout(state.antigravityPendingActiveAccountTimer);
+    state.antigravityPendingActiveAccountTimer = null;
+  }
+  state.antigravityPendingActiveAccount = null;
+  state.antigravityPendingActiveAccountUntil = 0;
+}
+
+function scheduleAntigravityPendingActiveAccountExpiry() {
+  if (state.antigravityPendingActiveAccountTimer) clearTimeout(state.antigravityPendingActiveAccountTimer);
+  const delay = Math.max(0, state.antigravityPendingActiveAccountUntil - Date.now());
+  state.antigravityPendingActiveAccountTimer = setTimeout(() => {
+    state.antigravityPendingActiveAccountTimer = null;
+    applyAntigravityActiveAccountFromStats();
+    renderLimits();
+    renderAntigravityStatus();
+    renderSettingsSummaries();
+  }, delay);
+}
+
+function setAntigravityPendingActiveAccount(account) {
+  if (!account) {
+    clearAntigravityPendingActiveAccount();
+    return;
+  }
+  state.antigravityPendingActiveAccount = account;
+  state.antigravityPendingActiveAccountUntil = Date.now() + CODEX_PENDING_ACTIVE_GRACE_MS;
+  scheduleAntigravityPendingActiveAccountExpiry();
+}
+
+function applyAntigravityActiveAccountFromStats() {
+  const activeAccount = antigravityActiveAccountFromStats();
+  if (state.antigravityPendingActiveAccount) {
+    const pendingAccount = state.antigravityPendingActiveAccount;
+    if (activeAccount && antigravityEmailsMatch(
+      pendingAccount.email || pendingAccount.accountEmail,
+      activeAccount.email || activeAccount.accountEmail
+    )) {
+      clearAntigravityPendingActiveAccount();
+      state.antigravityActiveAccount = activeAccount;
+      return;
+    }
+    if (Date.now() < state.antigravityPendingActiveAccountUntil) {
+      state.antigravityActiveAccount = pendingAccount;
+      return;
+    }
+    clearAntigravityPendingActiveAccount();
+  }
+  state.antigravityActiveAccount = activeAccount;
+}
+
 function codexProviderMatchesProvider(left, right) {
   if (!left || !right || left.provider !== 'codex' || right.provider !== 'codex') return false;
   const leftKey = String(left.accountKey || '').trim();
@@ -2774,6 +2883,7 @@ function applyCodexAccountLimitsRefresh(providers) {
     }
   };
   applyCodexActiveAccountFromStats();
+  applyAntigravityActiveAccountFromStats();
   renderLimits();
   maybeUpdateBarsIcon();
 }
@@ -2790,69 +2900,112 @@ function renderLimitProviderHead(id, label, provider, color, options = {}) {
   title.className = 'limit-name-title';
   title.textContent = options.title || label;
   const provenance = limitProviderProvenance(provider);
-  // The ✓ marks the account THIS device's Codex is signed into
-  // (state.codexActiveAccount, derived locally by codexActiveAccountFromStats).
-  // It only disambiguates rows in the multi-account group, so it's gated on
-  // showActiveBadge. Never re-derive "live" from the row being rendered — in
-  // sync mode that row can be a remote device's record for a different account,
-  // which would move the ✓ onto the wrong one.
-  const activeCodexAccount = options.showActiveBadge && codexActiveAccountMatchesProvider(provider);
-  const switchAccount = options.allowSystemSwitch && !activeCodexAccount ? codexSwitchAccountForProvider(provider) : null;
-  if (switchAccount && window.tokenMonitor?.codex?.switchSystemAccount) {
+  // The ✓ marks the account THIS device's local app is signed into. It only
+  // disambiguates rows in a multi-account group (showActiveBadge). Never
+  // re-derive "live" from the rendered row alone — in sync mode that row can
+  // belong to a remote device signed into a different account.
+  const systemSwitchProvider = id === 'codex' || id === 'antigravity' ? id : '';
+  const activeSystemAccount = options.showActiveBadge && (
+    systemSwitchProvider === 'codex'
+      ? codexActiveAccountMatchesProvider(provider)
+      : systemSwitchProvider === 'antigravity'
+        ? antigravityActiveAccountMatchesProvider(provider)
+        : false
+  );
+  const switchAccount = options.allowSystemSwitch && !activeSystemAccount
+    ? (systemSwitchProvider === 'codex'
+      ? codexSwitchAccountForProvider(provider)
+      : systemSwitchProvider === 'antigravity'
+        ? antigravitySwitchAccountForProvider(provider)
+        : null)
+    : null;
+  const switchApi = systemSwitchProvider === 'codex'
+    ? window.tokenMonitor?.codex?.switchSystemAccount
+    : systemSwitchProvider === 'antigravity'
+      ? window.tokenMonitor?.antigravity?.switchSystemAccount
+      : null;
+  if (switchAccount && switchApi) {
     const switchZone = document.createElement('span');
     const switchPopover = document.createElement('span');
     const switchButton = document.createElement('button');
-    const switching = state.codexSystemSwitchingAccountId === switchAccount.id;
-    const failed = state.codexSystemSwitchErrorAccountId === switchAccount.id && state.codexSystemSwitchError;
+    const switchingId = systemSwitchProvider === 'codex'
+      ? state.codexSystemSwitchingAccountId
+      : state.antigravitySystemSwitchingAccountId;
+    const errorAccountId = systemSwitchProvider === 'codex'
+      ? state.codexSystemSwitchErrorAccountId
+      : state.antigravitySystemSwitchErrorAccountId;
+    const errorMessage = systemSwitchProvider === 'codex'
+      ? state.codexSystemSwitchError
+      : state.antigravitySystemSwitchError;
+    const switching = switchingId === switchAccount.id;
+    const failed = errorAccountId === switchAccount.id && errorMessage;
+    const accountLabel = switchAccount.email
+      || switchAccount.accountEmail
+      || t(systemSwitchProvider === 'codex' ? 'settings.codex.unnamedAccount' : 'settings.antigravity.unnamedAccount');
+    const i18nPrefix = systemSwitchProvider === 'codex' ? 'limits.codex' : 'limits.antigravity';
+    const popoverOpenedKey = systemSwitchProvider === 'codex' ? 'codexSwitchPopoverHasOpened' : 'antigravitySwitchPopoverHasOpened';
+    const popoverActiveKey = systemSwitchProvider === 'codex' ? 'codexSwitchPopoverActive' : 'antigravitySwitchPopoverActive';
     switchZone.className = 'limit-account-switch-zone';
-    switchZone.classList.toggle('has-opened', state.codexSwitchPopoverHasOpened);
+    switchZone.classList.toggle('has-opened', state[popoverOpenedKey]);
     switchZone.classList.toggle('is-switching', Boolean(switching));
     switchZone.classList.toggle('is-error', Boolean(failed));
     switchPopover.className = 'limit-account-switch-popover';
     switchButton.type = 'button';
     switchButton.className = 'limit-account-switch-button';
-    switchButton.disabled = Boolean(state.codexSystemSwitchingAccountId);
-    switchButton.title = failed || t('limits.codex.switchAccountTitle', {
-      account: switchAccount.email || t('settings.codex.unnamedAccount')
-    });
+    switchButton.disabled = Boolean(switchingId);
+    switchButton.title = failed || t(`${i18nPrefix}.switchAccountTitle`, { account: accountLabel });
     switchButton.setAttribute('aria-label', switchButton.title);
     switchButton.textContent = switching
-      ? t('limits.codex.switching')
+      ? t(`${i18nPrefix}.switching`)
       : failed
-        ? t('limits.codex.switchFailedShort')
-        : t('limits.codex.switchAccount');
-    const markCodexSwitchPopoverOpened = () => {
-      state.codexSwitchPopoverHasOpened = true;
-      state.codexSwitchPopoverActive = true;
+        ? t(`${i18nPrefix}.switchFailedShort`)
+        : t(`${i18nPrefix}.switchAccount`);
+    const markSwitchPopoverOpened = () => {
+      state[popoverOpenedKey] = true;
+      state[popoverActiveKey] = true;
       switchZone.classList.add('has-opened');
     };
-    const releaseCodexSwitchPopover = () => {
+    const releaseSwitchPopover = () => {
       requestAnimationFrame(() => {
         if (switchZone.matches(':hover, :focus-within')) return;
-        state.codexSwitchPopoverActive = false;
-        flushPendingCodexSwitchPopoverRender();
+        state[popoverActiveKey] = false;
+        flushPendingSystemSwitchPopoverRender();
       });
     };
-    switchZone.addEventListener('pointerenter', markCodexSwitchPopoverOpened);
-    switchZone.addEventListener('focusin', markCodexSwitchPopoverOpened);
-    switchZone.addEventListener('pointerleave', releaseCodexSwitchPopover);
-    switchZone.addEventListener('focusout', releaseCodexSwitchPopover);
+    switchZone.addEventListener('pointerenter', markSwitchPopoverOpened);
+    switchZone.addEventListener('focusin', markSwitchPopoverOpened);
+    switchZone.addEventListener('pointerleave', releaseSwitchPopover);
+    switchZone.addEventListener('focusout', releaseSwitchPopover);
     switchButton.addEventListener('click', async (event) => {
       event.stopPropagation();
-      if (state.codexSystemSwitchingAccountId) return;
-      state.codexSystemSwitchingAccountId = switchAccount.id;
-      state.codexSystemSwitchErrorAccountId = '';
-      state.codexSystemSwitchError = '';
-      state.codexSwitchPopoverActive = false;
+      if (systemSwitchProvider === 'codex') {
+        if (state.codexSystemSwitchingAccountId) return;
+        state.codexSystemSwitchingAccountId = switchAccount.id;
+        state.codexSystemSwitchErrorAccountId = '';
+        state.codexSystemSwitchError = '';
+        state.codexSwitchPopoverActive = false;
+      } else {
+        if (state.antigravitySystemSwitchingAccountId) return;
+        state.antigravitySystemSwitchingAccountId = switchAccount.id;
+        state.antigravitySystemSwitchErrorAccountId = '';
+        state.antigravitySystemSwitchError = '';
+        state.antigravitySwitchPopoverActive = false;
+      }
       renderLimits();
       try {
-        const result = await window.tokenMonitor.codex.switchSystemAccount(switchAccount.id);
+        const result = await switchApi(switchAccount.id);
         if (!result?.ok) {
-          const message = result?.error || t('limits.codex.switchFailed');
-          state.codexSystemSwitchErrorAccountId = switchAccount.id;
-          state.codexSystemSwitchError = message;
-          state.codexAccountError = message;
-        } else {
+          const message = result?.error || t(`${i18nPrefix}.switchFailed`);
+          if (systemSwitchProvider === 'codex') {
+            state.codexSystemSwitchErrorAccountId = switchAccount.id;
+            state.codexSystemSwitchError = message;
+            state.codexAccountError = message;
+          } else {
+            state.antigravitySystemSwitchErrorAccountId = switchAccount.id;
+            state.antigravitySystemSwitchError = message;
+            state.antigravityAccountError = message;
+          }
+        } else if (systemSwitchProvider === 'codex') {
           state.codexAccountError = '';
           state.settings.codexManagedAccounts = result.accounts || state.settings.codexManagedAccounts || [];
           setCodexPendingActiveAccount(result.activeAccount || null);
@@ -2864,27 +3017,52 @@ function renderLimitProviderHead(id, label, provider, color, options = {}) {
           }).catch((refreshError) => {
             console.log(`[codex] refresh account limits failed: ${refreshError?.message || refreshError}`);
           });
+        } else {
+          state.antigravityAccountError = result.warning || '';
+          state.settings.antigravityManagedAccounts = result.accounts || state.settings.antigravityManagedAccounts || [];
+          setAntigravityPendingActiveAccount(result.activeAccount || null);
+          state.antigravityActiveAccount = result.activeAccount;
+          renderLimits();
+          // AG switch restarts the IDE, so a full limits refresh picks up the
+          // new live probe identity once the language server is back.
+          refreshStats({ force: true }).catch(() => {});
         }
       } catch (error) {
-        const message = error?.message || t('limits.codex.switchFailed');
-        state.codexSystemSwitchErrorAccountId = switchAccount.id;
-        state.codexSystemSwitchError = message;
-        state.codexAccountError = message;
+        const message = error?.message || t(`${i18nPrefix}.switchFailed`);
+        if (systemSwitchProvider === 'codex') {
+          state.codexSystemSwitchErrorAccountId = switchAccount.id;
+          state.codexSystemSwitchError = message;
+          state.codexAccountError = message;
+        } else {
+          state.antigravitySystemSwitchErrorAccountId = switchAccount.id;
+          state.antigravitySystemSwitchError = message;
+          state.antigravityAccountError = message;
+        }
       } finally {
-        state.codexSystemSwitchingAccountId = '';
-        renderLimits();
-        renderCodexAccounts();
-        renderSettingsSummaries();
+        if (systemSwitchProvider === 'codex') {
+          state.codexSystemSwitchingAccountId = '';
+          renderLimits();
+          renderCodexAccounts();
+          renderSettingsSummaries();
+        } else {
+          state.antigravitySystemSwitchingAccountId = '';
+          renderLimits();
+          renderAntigravityStatus();
+          renderSettingsSummaries();
+        }
       }
     });
     switchPopover.append(switchButton);
     switchZone.append(title, switchPopover);
     name.append(switchZone);
-  } else if (activeCodexAccount) {
+  } else if (activeSystemAccount) {
     const activeZone = document.createElement('span');
     const badge = document.createElement('span');
     const activePopover = document.createElement('span');
-    const activeHint = t('limits.codex.activeAccountHint');
+    const activeHint = t(systemSwitchProvider === 'codex'
+      ? 'limits.codex.activeAccountHint'
+      : 'limits.antigravity.activeAccountHint');
+    const popoverActiveKey = systemSwitchProvider === 'codex' ? 'codexSwitchPopoverActive' : 'antigravitySwitchPopoverActive';
     activeZone.className = 'limit-account-active-zone';
     activeZone.tabIndex = 0;
     activeZone.setAttribute('aria-label', activeHint);
@@ -2892,20 +3070,20 @@ function renderLimitProviderHead(id, label, provider, color, options = {}) {
     badge.textContent = '\u2713';
     activePopover.className = 'limit-account-active-popover';
     activePopover.textContent = activeHint;
-    const markCodexActiveHintOpened = () => {
-      state.codexSwitchPopoverActive = true;
+    const markActiveHintOpened = () => {
+      state[popoverActiveKey] = true;
     };
-    const releaseCodexActiveHint = () => {
+    const releaseActiveHint = () => {
       requestAnimationFrame(() => {
         if (activeZone.matches(':hover, :focus-within')) return;
-        state.codexSwitchPopoverActive = false;
-        flushPendingCodexSwitchPopoverRender();
+        state[popoverActiveKey] = false;
+        flushPendingSystemSwitchPopoverRender();
       });
     };
-    activeZone.addEventListener('pointerenter', markCodexActiveHintOpened);
-    activeZone.addEventListener('focusin', markCodexActiveHintOpened);
-    activeZone.addEventListener('pointerleave', releaseCodexActiveHint);
-    activeZone.addEventListener('focusout', releaseCodexActiveHint);
+    activeZone.addEventListener('pointerenter', markActiveHintOpened);
+    activeZone.addEventListener('focusin', markActiveHintOpened);
+    activeZone.addEventListener('pointerleave', releaseActiveHint);
+    activeZone.addEventListener('focusout', releaseActiveHint);
     activeZone.append(title, badge, activePopover);
     name.append(activeZone);
   } else {
@@ -3445,6 +3623,35 @@ function renderMimoAccountGroup(label, providers, color) {
   return row;
 }
 
+function renderAntigravityAccountGroup(label, providers, color) {
+  const row = document.createElement('div');
+  row.className = `limit-row limit-row-group${providers.some((provider) => provider.stale) ? ' stale' : ''}`;
+  const groupProvider = { provider: 'antigravity', status: 'ok', windows: [] };
+  const head = renderLimitProviderHead('antigravity', label, groupProvider, color, {
+    planText: t('settings.antigravity.nAccounts', { count: providers.length }),
+    hideMeta: true
+  });
+  const accountList = document.createElement('div');
+  accountList.className = 'limit-account-list';
+  providers.forEach((provider, index) => {
+    accountList.append(renderLimitProviderRow(
+      'antigravity',
+      limitAccountTitle('antigravity', provider, index, providers),
+      provider,
+      color,
+      {
+        accountRow: true,
+        accountTitle: true,
+        allowSystemSwitch: true,
+        showActiveBadge: true,
+        showIcon: false
+      }
+    ));
+  });
+  row.append(head, accountList);
+  return row;
+}
+
 function opencodeAccountTitle(provider, index) {
   const name = String(provider?.accountName || '').trim();
   if (name) return name;
@@ -3542,14 +3749,18 @@ function renderThirdPartyAccountGroup(label, providers, color) {
 function renderLimits() {
   if (!els.limitsPanel) return;
   const holdLimitDetailTooltipRender = limitDetailTooltipShouldHoldRender();
-  const holdCodexSwitchPopoverRender = codexSwitchPopoverShouldHoldRender();
-  if (holdLimitDetailTooltipRender || holdCodexSwitchPopoverRender) {
+  const holdSystemSwitchPopoverRender = systemSwitchPopoverShouldHoldRender();
+  if (holdLimitDetailTooltipRender || holdSystemSwitchPopoverRender) {
     if (holdLimitDetailTooltipRender) state.limitDetailTooltipRenderPending = true;
-    if (holdCodexSwitchPopoverRender) state.codexSwitchPopoverRenderPending = true;
+    if (holdSystemSwitchPopoverRender) {
+      if (state.codexSwitchPopoverActive) state.codexSwitchPopoverRenderPending = true;
+      if (state.antigravitySwitchPopoverActive) state.antigravitySwitchPopoverRenderPending = true;
+    }
     return;
   }
   state.limitDetailTooltipRenderPending = false;
   state.codexSwitchPopoverRenderPending = false;
+  state.antigravitySwitchPopoverRenderPending = false;
   const limitsEnabled = state.settings?.limitsEnabled !== false;
   const enabled = enabledLimitProviderSet();
   const providers = providersByLimitProviderId(state.stats?.limits?.providers || []);
@@ -3592,6 +3803,10 @@ function renderLimits() {
     }
     if (id === 'mimo' && Array.isArray(visibleProviders) && visibleProviders.length > 1) {
       nodes.push(renderMimoAccountGroup(label, visibleProviders, color));
+      continue;
+    }
+    if (id === 'antigravity' && Array.isArray(visibleProviders) && visibleProviders.length > 1) {
+      nodes.push(renderAntigravityAccountGroup(label, visibleProviders, color));
       continue;
     }
     const provider = Array.isArray(visibleProviders) ? visibleProviders[0] : visibleProviders;
@@ -5242,6 +5457,7 @@ async function refreshStats(options = {}) {
       state.homeHistorySignature = '';
     }
     applyCodexActiveAccountFromStats();
+    applyAntigravityActiveAccountFromStats();
     setStatus(statusTextFor(state.mode, state.streamConnected));
     statsRenderScheduler.request();
     maybeUpdateBarsIcon();
@@ -6287,6 +6503,7 @@ function syncSettingsForm() {
   renderExternalProviderStatus('kimi');
   renderExternalProviderStatus('ollama');
   renderMimoStatus();
+  renderAntigravityStatus();
   renderCopilotStatus();
   renderViewPreferences();
   renderToolPreferences();
@@ -8822,6 +9039,7 @@ window.tokenMonitor.onStatsPush?.((payload) => {
     if (payload.data?.mode) state.mode = payload.data.mode;
     state.stats = overlayAllTimeSessions(payload.data.stats);
     applyCodexActiveAccountFromStats();
+    applyAntigravityActiveAccountFromStats();
     // Progressive mid-tick pushes never carry a fresh history scan (see
     // AGENTS.md collector notes), so only the final push can retire the
     // "just turned trends on" loading state without a flash back to empty.
@@ -10058,6 +10276,10 @@ function setMimoAccountExpanded(expanded) {
   setAccountGroupExpanded('mimo', expanded, 'mimoAccountExpanded');
 }
 
+function setAntigravityAccountExpanded(expanded) {
+  setAccountGroupExpanded('antigravity', expanded, 'antigravityAccountExpanded');
+}
+
 function setCopilotAccountExpanded(expanded) {
   setAccountGroupExpanded('copilot', expanded, 'copilotAccountExpanded');
 }
@@ -10286,6 +10508,79 @@ function clearDeepseekPendingCheck() {
 function clearDeepseekProviderStatus() {
   if (!Array.isArray(state.stats?.limits?.providers)) return;
   state.stats.limits.providers = state.stats.limits.providers.filter((provider) => provider.provider !== 'deepseek');
+}
+
+function renderAntigravityStatus() {
+  const statusEl = document.getElementById('antigravityAccountStatus');
+  const listEl = document.getElementById('antigravityAccountList');
+  const emptyEl = document.getElementById('antigravityAccountEmpty');
+  const errorEl = document.getElementById('antigravityAccountErrorMessage');
+  if (!statusEl || !listEl || !emptyEl || !errorEl) return;
+  const accounts = state.settings?.antigravityManagedAccounts || [];
+  const enabledCount = accounts.filter((account) => account.enabled !== false).length;
+  setCursorStatusText(statusEl, accounts.length ? `${enabledCount}/${accounts.length} enabled` : 'Not configured');
+  errorEl.textContent = state.antigravityAccountError || '';
+  errorEl.classList.toggle('hidden', !state.antigravityAccountError);
+  emptyEl.classList.toggle('hidden', accounts.length > 0);
+  listEl.replaceChildren();
+  for (const [index, account] of accounts.entries()) {
+    const enabled = account.enabled !== false;
+    const row = document.createElement('div');
+    row.className = 'managed-account-row';
+    row.classList.toggle('disabled', !enabled);
+    const input = document.createElement('input');
+    input.className = 'managed-account-checkbox';
+    input.type = 'checkbox';
+    input.checked = enabled;
+    input.setAttribute('aria-label', `Enable Antigravity account ${account.accountEmail || `Account ${index + 1}`}`);
+    input.addEventListener('change', async () => {
+      input.disabled = true;
+      const result = await window.tokenMonitor.antigravity.setAccountEnabled(account.id, input.checked);
+      if (result?.ok) {
+        state.antigravityAccountError = '';
+        state.settings.antigravityManagedAccounts = result.accounts || [];
+      } else state.antigravityAccountError = result?.error || 'Could not update account';
+      renderAntigravityStatus();
+      renderSettingsSummaries();
+    });
+    const main = document.createElement('div');
+    main.className = 'managed-account-main';
+    const label = document.createElement('div');
+    label.className = 'managed-account-email';
+    label.textContent = account.accountEmail || account.accountLabel || `Account ${index + 1}`;
+    main.append(label);
+    const right = document.createElement('span');
+    right.className = 'managed-account-right';
+    const info = document.createElement('span');
+    info.className = 'managed-account-info';
+    info.textContent = enabled ? 'Remote quota' : 'Disabled';
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'managed-account-remove';
+    remove.textContent = '✕';
+    remove.title = 'Remove account';
+    let confirming = false;
+    remove.addEventListener('click', async () => {
+      if (!confirming) {
+        confirming = true;
+        remove.classList.add('confirming');
+        remove.textContent = '✓';
+        remove.title = `Remove ${label.textContent}`;
+        return;
+      }
+      const result = await window.tokenMonitor.antigravity.removeAccount(account.id);
+      if (result?.ok) {
+        state.antigravityAccountError = '';
+        state.settings.antigravityManagedAccounts = result.accounts || [];
+      } else state.antigravityAccountError = result?.error || 'Could not remove account';
+      renderAntigravityStatus();
+      renderSettingsSummaries();
+      if (result?.ok) refreshStats({ force: true }).catch(() => {});
+    });
+    right.append(info, remove);
+    row.append(input, main, right);
+    listEl.append(row);
+  }
 }
 
 function renderMimoStatus() {
@@ -12462,6 +12757,45 @@ function setupCursorAccountUI() {
         errorEl.textContent = t('settings.kimi.saveFailed', { message: err.message });
         errorEl.classList.remove('hidden');
       }
+    });
+  }
+
+  const antigravityToggle = document.getElementById('antigravitySettingsToggle');
+  if (antigravityToggle) {
+    antigravityToggle.addEventListener('click', () => setAntigravityAccountExpanded(!state.antigravityAccountExpanded));
+    setAntigravityAccountExpanded(false);
+    renderAntigravityStatus();
+    window.tokenMonitor.antigravity.accounts().then((accounts) => {
+      state.settings.antigravityManagedAccounts = accounts || [];
+      renderAntigravityStatus();
+    }).catch(() => {});
+    const signInButton = document.getElementById('antigravitySignInButton');
+    const cancelSignInButton = document.getElementById('antigravityCancelSignInButton');
+    signInButton?.addEventListener('click', async () => {
+      state.antigravityAccountError = '';
+      const flowId = crypto.randomUUID();
+      state.antigravityLoginFlowId = flowId;
+      signInButton.disabled = true;
+      signInButton.textContent = 'Waiting for Google sign-in…';
+      cancelSignInButton?.classList.remove('hidden');
+      let result;
+      try { result = await window.tokenMonitor.antigravity.signIn({ flowId }); }
+      catch (_) { result = { ok: false, error: 'Could not start Google sign-in.' }; }
+      signInButton.disabled = false;
+      signInButton.textContent = 'Sign in with Google / Add account';
+      cancelSignInButton?.classList.add('hidden');
+      state.antigravityLoginFlowId = '';
+      if (!result?.ok) {
+        state.antigravityAccountError = result?.error || 'Could not complete Google sign-in.';
+        renderAntigravityStatus();
+        return;
+      }
+      state.settings.antigravityManagedAccounts = result.accounts || [];
+      renderAntigravityStatus();
+      refreshStats({ force: true }).catch(() => {});
+    });
+    cancelSignInButton?.addEventListener('click', () => {
+      void window.tokenMonitor.antigravity.cancelSignIn({ flowId: state.antigravityLoginFlowId || '' });
     });
   }
 

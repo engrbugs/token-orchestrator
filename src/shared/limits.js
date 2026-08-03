@@ -458,6 +458,7 @@ function providerCollapseKey(provider) {
       || provider.provider === 'opencode'
       || provider.provider === 'openrouter'
       || provider.provider === 'thirdparty'
+      || provider.provider === 'antigravity'
       || provider.provider === 'mimo')
     && isConfiguredProvider(provider)
   ) {

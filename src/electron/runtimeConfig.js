@@ -43,6 +43,7 @@ const LIMIT_PROVIDER_SETTING_KEYS = Object.freeze({
   ollama: ['ollamaCookie'],
   codex: ['codexManagedAccounts'],
   mimo: ['mimoManagedAccounts'],
+  antigravity: ['antigravityManagedAccounts'],
   thirdparty: ['thirdPartyProfiles']
 });
 
@@ -117,6 +118,7 @@ function limitsConfigFromSettings(settings = {}, context = {}) {
     ollamaCookie: settings.ollamaCookie || '',
     codexManagedAccounts: context.codexManagedAccounts ?? settings.codexManagedAccounts ?? [],
     mimoManagedAccounts: context.mimoManagedAccounts ?? settings.mimoManagedAccounts ?? [],
+    antigravityManagedAccounts: context.antigravityManagedAccounts ?? settings.antigravityManagedAccounts ?? [],
     thirdPartyProfiles: settings.thirdPartyProfiles || {}
   };
 }

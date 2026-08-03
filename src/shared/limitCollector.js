@@ -17,6 +17,7 @@ const { abortError } = require('./probeDeadline');
 const cursorAuth = require('./cursorAuth');
 const cursorProbe = require('./cursorProbe');
 const antigravityProbe = require('./antigravityProbe');
+const antigravityAccounts = require('./antigravityAccounts');
 const opencodeLimits = require('./opencodeLimits');
 const opencodeWeb = require('./opencodeWeb');
 const openrouterLimits = require('./openrouterLimits');
@@ -3038,6 +3039,22 @@ async function fetchCodexLimits(options = {}, deps = {}) {
 }
 
 async function fetchAntigravityLimits(_options = {}, deps = {}) {
+  const managedAccounts = _options.antigravityManagedAccounts || deps.antigravityManagedAccounts;
+  if (Array.isArray(managedAccounts) && managedAccounts.length > 0) {
+    const managedProviders = await antigravityAccounts.fetchAntigravityManagedLimits(managedAccounts, deps);
+    // Managed OAuth accounts supplement the account currently signed into the
+    // local IDE. Keep that native probe because it exposes Antigravity's two
+    // authoritative Gemini / Claude-GPT pools and may be the same account as
+    // one of the imported OAuth grants.
+    const localProviders = await fetchAntigravityLimits({ ..._options, antigravityManagedAccounts: [] }, deps);
+    const localEmail = String(localProviders?.accountEmail || '').trim().toLowerCase();
+    const providers = managedProviders.filter((provider) => {
+      const email = String(provider?.accountEmail || '').trim().toLowerCase();
+      return !localEmail || !email || email !== localEmail;
+    });
+    if (localProviders?.status !== 'notConfigured' || localProviders?.accountEmail) providers.unshift(localProviders);
+    return providers;
+  }
   const nowMs = (deps.now || Date.now)();
   const updatedAt = nowIso(nowMs);
   const probeFn = deps.antigravityProbe || antigravityProbe.probe;
@@ -3437,6 +3454,11 @@ function providerPhysicalBoundMs(provider, options = {}, deps = {}) {
       ? (options.mimoManagedAccounts || deps.mimoManagedAccounts)
       : [];
     jobs = options.limitRefreshScope?.provider === 'mimo' ? 1 : Math.max(1, managed.length);
+  } else if (provider === 'antigravity') {
+    const managed = Array.isArray(options.antigravityManagedAccounts || deps.antigravityManagedAccounts)
+      ? (options.antigravityManagedAccounts || deps.antigravityManagedAccounts)
+      : [];
+    jobs = options.limitRefreshScope?.provider === 'antigravity' ? 1 : Math.max(1, managed.filter((account) => account?.enabled !== false).length);
   }
   return base * jobs;
 }
@@ -3724,6 +3746,9 @@ module.exports = {
   fetchCursorLimits,
   fetchDeepSeekLimits,
   fetchMimoLimits,
+  createAntigravityManagedAccount: antigravityAccounts.createAntigravityManagedAccount,
+  normalizeAntigravityManagedAccounts: antigravityAccounts.normalizeAntigravityManagedAccounts,
+  startAntigravityOAuthFlow: antigravityAccounts.startAntigravityOAuthFlow,
   readCodexRpcWithCommand,
   runCodexLogin,
   runProcessText,

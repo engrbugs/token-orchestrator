@@ -123,6 +123,42 @@ test('watchPathsForClients watches the Antigravity CLI data dir but not the IDE 
   }
 });
 
+test('watchPathsForClients watches native Antigravity source data but not the generated cache', () => {
+  const tmp = withTmpHome([
+    path.join('.gemini', 'antigravity', 'conversations'),
+    path.join('.gemini', 'antigravity', 'brain'),
+    path.join('AppData', 'Roaming', 'tokscale', 'antigravity-cache')
+  ]);
+  const originalHomedir = os.homedir;
+  os.homedir = () => tmp;
+  try {
+    const { watchPathsForClients } = freshCollector();
+    const dirs = watchPathsForClients('antigravity');
+    assert.ok(dirs.includes(path.join(tmp, '.gemini', 'antigravity', 'conversations')));
+    assert.ok(dirs.includes(path.join(tmp, '.gemini', 'antigravity', 'brain')));
+    assert.equal(dirs.some((dir) => dir.includes('antigravity-cache')), false);
+  } finally {
+    os.homedir = originalHomedir;
+    delete require.cache[collectorPath];
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('native Antigravity source paths are the only paths eligible to force sync', () => {
+  const tmp = withTmpHome([path.join('.gemini', 'antigravity', 'conversations')]);
+  const originalHomedir = os.homedir;
+  os.homedir = () => tmp;
+  try {
+    const { antigravitySourcePath } = freshCollector();
+    assert.equal(antigravitySourcePath(path.join(tmp, '.gemini', 'antigravity', 'conversations', 'one.pb')), true);
+    assert.equal(antigravitySourcePath(path.join(tmp, 'AppData', 'Roaming', 'tokscale', 'antigravity-cache', 'sessions')), false);
+  } finally {
+    os.homedir = originalHomedir;
+    delete require.cache[collectorPath];
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
 test('watchPathsForClients watches only Proma data that is currently parsed', () => {
   const tmp = withTmpHome([
     path.join('.proma', 'agent-sessions'),
