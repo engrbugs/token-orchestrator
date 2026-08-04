@@ -8,9 +8,6 @@ The widget provides:
 
 - Local usage and cost collection through `tokscale`
 - AI Tool Limits for supported providers, including multiple Codex and Antigravity accounts
-- Session details and project attribution
-- Floating-bubble mode and global show/hide shortcuts
-- A normal title bar with always-available minimize and close controls
 
 The app has no system-tray icon. Usage collection continues in the background while the widget is open or minimized.
 
@@ -18,9 +15,17 @@ Supported client and provider identifiers are maintained in the code and documen
 
 ## Getting started
 
-1. Install the latest [published GitHub release](https://github.com/engrbugs/token-orchestrator/releases) when one is available. For a checkout without a published release, use the development steps below.
-2. Launch the widget and open Settings to configure tracked clients and provider limits.
-3. Add provider credentials only for the services you want to query.
+Clone or update the repository, install dependencies, and start the widget:
+
+```bash
+git clone https://github.com/engrbugs/token-orchestrator.git
+cd token-orchestrator
+npm install
+npm start
+```
+
+For an existing checkout, use `git pull` before `npm install`. Then open Settings
+to configure tracked clients, provider limits, and credentials.
 
 The desktop widget is local-only. The legacy headless agent and standalone hub remain available as separate command-line utilities; see [Configuration](docs/configuration.md).
 
