@@ -10,7 +10,7 @@ function parseBoolean(value, fallback = false) {
 }
 
 function normalizeTrayModeSettings(settings = {}) {
-  const showTrayIcon = parseBoolean(settings.showTrayIcon, true);
+  const showTrayIcon = false;
   return {
     showTrayIcon,
     trayMode: showTrayIcon ? parseBoolean(settings.trayMode, false) : false

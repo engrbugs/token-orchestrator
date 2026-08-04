@@ -36,8 +36,9 @@ test('renderer includes a dedicated service status panel and Status view option'
 
   assert.match(html, /<section id="serviceStatusPanel" class="service-status-panel hidden"><\/section>/);
   assert.match(html, /<script src="serviceStatusPresentation\.js"><\/script>/);
-  assert.match(app, /\{ id: 'status', labelKey: 'views\.status' \}/);
-  assert.match(app, /viewBreakdownValues = new Set\(\['home', \.\.\.baseBreakdownOrder, 'status', 'limits', 'trends'\]\)/);
+  // Limits-only shell no longer exposes Status as a main view option.
+  assert.match(app, /\{ id: 'limits', labelKey: 'views\.limits' \}/);
+  assert.match(app, /viewBreakdownValues = new Set\(\['limits'\]\)/);
   // Placeholders cover every provider so the rows render before the first fetch.
   assert.match(app, /label: 'Cursor'/);
   assert.match(app, /label: 'DeepSeek'/);
@@ -265,7 +266,7 @@ test('view switcher preserves click-to-cycle and direct selection without crowdi
   const app = readRendererFile('app.js');
   const css = readRendererFile('styles.css');
   const setViewSwitcherOpenBody = functionBody(app, 'setViewSwitcherOpen', 'renderViewSwitcher');
-  assert.match(html, /id="viewSwitcher" class="view-switcher"/);
+  assert.match(html, /id="viewSwitcher" class="view-switcher hidden"/);
   assert.doesNotMatch(html, /id="viewDock"/);
   assert.match(app, /function nextBreakdown/);
   assert.match(app, /function updateViewSwitcherOpenState/);
@@ -307,9 +308,9 @@ test('view switcher preserves click-to-cycle and direct selection without crowdi
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.view-switcher-menu/);
   assert.match(cssRule(css, '.view-switcher-menu-item'), /grid-template-columns:\s*16px minmax\(0, 1fr\)/);
   assert.doesNotMatch(css, /\.view-switcher-menu-item\.is-current::after/);
-  assert.match(cssRule(css, '.utility-actions'), /flex:\s*0 0 34px/);
-  assert.match(cssRule(css, '.utility-actions .refresh-button'), /position:\s*absolute/);
-  assert.match(cssRule(css, '.utility-actions .refresh-button'), /right:\s*calc\(100% \+ 6px\)/);
+  assert.match(cssRule(css, '.utility-actions'), /flex:\s*0 0 auto/);
+  assert.match(cssRule(css, '.utility-actions .refresh-button'), /opacity:\s*1/);
+  assert.match(cssRule(css, '.utility-actions .refresh-button'), /pointer-events:\s*auto/);
   assert.doesNotMatch(css, /@media \(max-width: 280px\)[\s\S]*\.view-switcher-current > \.view-switcher-icon/);
   assert.match(cssRule(css, '.view-switcher-icon'), /flex:\s*0 0 auto/);
   assert.doesNotMatch(css, /\.view-dock/);

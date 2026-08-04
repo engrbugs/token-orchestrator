@@ -252,12 +252,12 @@ const SERVICE_STATUS_PLACEHOLDERS = [
   { id: 'deepseek', label: 'DeepSeek', pageUrl: 'https://status.deepseek.com' }
 ];
 const SERVICE_PROVIDER_OPTIONS = SERVICE_STATUS_PLACEHOLDERS.map((entry) => ({ id: entry.id, label: entry.label }));
-const TOKEN_MONITOR_REPOSITORY_URL = 'https://github.com/Javis603/token-monitor';
+const TOKEN_MONITOR_REPOSITORY_URL = 'https://github.com/engrbugs/token-orchestrator';
 const TOKEN_MONITOR_ISSUES_URL = `${TOKEN_MONITOR_REPOSITORY_URL}/issues/new/choose`;
-const TOKEN_MONITOR_WEBSITE_URL = 'https://javis-ai.com/token-monitor/';
+const TOKEN_MONITOR_WEBSITE_URL = 'https://github.com/engrbugs/token-orchestrator/';
 const TOKEN_MONITOR_WSL_SQLITE_GUIDE_URL = `${TOKEN_MONITOR_REPOSITORY_URL}/blob/main/docs/wsl-sqlite-setup.md`;
 const serviceStatusProviderPreferencesApi = window.TokenMonitorServiceStatusProviderPreferences;
-const SETTINGS_SECTION_IDS = ['general', 'main', 'window', 'appearance', 'tools', 'limits', 'sync'];
+const SETTINGS_SECTION_IDS = ['general', 'window', 'appearance', 'tools', 'limits', 'sync'];
 const REFRESH_BUTTON_FEEDBACK_MS = 700;
 const CODEX_PENDING_ACTIVE_GRACE_MS = 30000;
 const initialFloatingBubble = window.__TOKEN_MONITOR_INITIAL_FLOATING_BUBBLE__ || { collapsed: false, side: null };
@@ -287,7 +287,7 @@ let viewSwitcherLongPressTimer = null;
 let viewSwitcherLongPressTriggered = false;
 let viewSwitcherHoverCloseTimer = null;
 const els = {
-  shell: document.querySelector('.shell'), status: document.getElementById('status'), liveDot: document.getElementById('liveDot'), tokenRateReveal: document.getElementById('tokenRateReveal'), totalTokens: document.getElementById('totalTokens'), totalTokensCompact: document.getElementById('totalTokensCompact'), cost: document.getElementById('cost'), homePanel: document.getElementById('homePanel'), breakdown: document.getElementById('breakdown'), serviceStatusPanel: document.getElementById('serviceStatusPanel'), limitsPanel: document.getElementById('limitsPanel'), trendsPanel: document.getElementById('trendsPanel'), viewSwitcher: document.getElementById('viewSwitcher'), pinButton: document.getElementById('pinButton'), utilityActions: document.getElementById('utilityActions'), settingsButton: document.getElementById('settingsButton'), settingsPanel: document.getElementById('settingsPanel'), languageInput: document.getElementById('languageInput'), currencyInput: document.getElementById('currencyInput'), currencyRateRow: document.getElementById('currencyRateRow'), currencyRateModeAuto: document.getElementById('currencyRateModeAuto'), currencyRateModeManual: document.getElementById('currencyRateModeManual'), currencyRateManualField: document.getElementById('currencyRateManualField'), currencyRateOverrideInput: document.getElementById('currencyRateOverrideInput'), currencyRateStatus: document.getElementById('currencyRateStatus'), hubUrlInput: document.getElementById('hubUrlInput'), secretInput: document.getElementById('secretInput'), deviceIdInput: document.getElementById('deviceIdInput'), limitProviderCheckboxes: document.getElementById('limitProviderCheckboxes'), limitsRefreshInput: document.getElementById('limitsRefreshInput'), showLimitSourceInput: document.getElementById('showLimitSourceInput'), maskLimitAccountEmailsInput: document.getElementById('maskLimitAccountEmailsInput'), showLimitUsedInputs: Array.from(document.querySelectorAll('input[name="showLimitUsed"]')), liveDotInput: document.getElementById('liveDotInput'), toolIconsInput: document.getElementById('toolIconsInput'), floatingBubbleInput: document.getElementById('floatingBubbleInput'), floatingBubbleTriggerInputs: Array.from(document.querySelectorAll('input[name="floatingBubbleTrigger"]')), floatingBubbleTriggerRow: document.getElementById('floatingBubbleTriggerRow'), floatingBubbleContentInput: document.getElementById('floatingBubbleContentInput'), floatingBubbleContentRow: document.getElementById('floatingBubbleContentRow'), floatingBubbleComposer: document.getElementById('floatingBubbleComposer'), floatingBubbleContent: document.getElementById('floatingBubbleContent'), discordRpcInput: document.getElementById('discordRpcInput'), windowBehaviorInput: document.getElementById('windowBehaviorInput'), showTrayIconInput: document.getElementById('showTrayIconInput'), showTrayProviderBadgeInput: document.getElementById('showTrayProviderBadgeInput'), trayModeInput: document.getElementById('trayModeInput'), trayContentInput: document.getElementById('trayContentInput'), trayComposer: document.getElementById('trayComposer'), windowToggleShortcutValue: document.getElementById('windowToggleShortcutValue'), windowToggleShortcutClearButton: document.getElementById('windowToggleShortcutClearButton'), windowToggleShortcutNote: document.getElementById('windowToggleShortcutNote'), glassInput: document.getElementById('glassInput'), blurInput: document.getElementById('blurInput'), zoomInput: document.getElementById('zoomInput'), resetGlassButton: document.getElementById('resetGlassButton'), resetDepthButton: document.getElementById('resetDepthButton'), resetZoomButton: document.getElementById('resetZoomButton'), saveSettingsButton: document.getElementById('saveSettingsButton'), clientDisplayList: document.getElementById('clientDisplayList'), wslScanInput: document.getElementById('wslScanInput'), wslScanRow: document.getElementById('wslScanRow'), wslPanel: document.getElementById('wslPanel'), openConfigButton: document.getElementById('openConfigButton'), exportAutoInput: document.getElementById('exportAutoInput'), exportAutoDetails: document.getElementById('exportAutoDetails'), exportAutoStatus: document.getElementById('exportAutoStatus'), exportDirLabel: document.getElementById('exportDirLabel'), exportPickDirButton: document.getElementById('exportPickDirButton'), exportIntervalInput: document.getElementById('exportIntervalInput'), exportNowButton: document.getElementById('exportNowButton'), refreshButton: document.getElementById('refreshButton'), minButton: document.getElementById('minButton'), closeButton: document.getElementById('closeButton'), floatingBubbleTab: document.getElementById('floatingBubbleTab')
+  shell: document.querySelector('.shell'), status: document.getElementById('status'), liveDot: document.getElementById('liveDot'), totalTokens: document.getElementById('totalTokens'), totalTokensCompact: document.getElementById('totalTokensCompact'), cost: document.getElementById('cost'), homePanel: document.getElementById('homePanel'), breakdown: document.getElementById('breakdown'), serviceStatusPanel: document.getElementById('serviceStatusPanel'), limitsPanel: document.getElementById('limitsPanel'), trendsPanel: document.getElementById('trendsPanel'), viewSwitcher: document.getElementById('viewSwitcher'), pinButton: document.getElementById('pinButton'), utilityActions: document.getElementById('utilityActions'), settingsButton: document.getElementById('settingsButton'), settingsPanel: document.getElementById('settingsPanel'), languageInput: document.getElementById('languageInput'), currencyInput: document.getElementById('currencyInput'), currencyRateRow: document.getElementById('currencyRateRow'), currencyRateModeAuto: document.getElementById('currencyRateModeAuto'), currencyRateModeManual: document.getElementById('currencyRateModeManual'), currencyRateManualField: document.getElementById('currencyRateManualField'), currencyRateOverrideInput: document.getElementById('currencyRateOverrideInput'), currencyRateStatus: document.getElementById('currencyRateStatus'), hubUrlInput: document.getElementById('hubUrlInput'), secretInput: document.getElementById('secretInput'), deviceIdInput: document.getElementById('deviceIdInput'), limitProviderCheckboxes: document.getElementById('limitProviderCheckboxes'), limitsRefreshInput: document.getElementById('limitsRefreshInput'), showLimitSourceInput: document.getElementById('showLimitSourceInput'), maskLimitAccountEmailsInput: document.getElementById('maskLimitAccountEmailsInput'), showLimitUsedInputs: Array.from(document.querySelectorAll('input[name="showLimitUsed"]')), toolIconsInput: document.getElementById('toolIconsInput'), floatingBubbleInput: document.getElementById('floatingBubbleInput'), floatingBubbleTriggerInputs: Array.from(document.querySelectorAll('input[name="floatingBubbleTrigger"]')), floatingBubbleTriggerRow: document.getElementById('floatingBubbleTriggerRow'), floatingBubbleContentInput: document.getElementById('floatingBubbleContentInput'), floatingBubbleContentRow: document.getElementById('floatingBubbleContentRow'), floatingBubbleComposer: document.getElementById('floatingBubbleComposer'), floatingBubbleContent: document.getElementById('floatingBubbleContent'), discordRpcInput: document.getElementById('discordRpcInput'), windowBehaviorInput: document.getElementById('windowBehaviorInput'), showTrayIconInput: document.getElementById('showTrayIconInput'), showTrayProviderBadgeInput: document.getElementById('showTrayProviderBadgeInput'), trayModeInput: document.getElementById('trayModeInput'), trayContentInput: document.getElementById('trayContentInput'), trayComposer: document.getElementById('trayComposer'), windowToggleShortcutValue: document.getElementById('windowToggleShortcutValue'), windowToggleShortcutClearButton: document.getElementById('windowToggleShortcutClearButton'), windowToggleShortcutNote: document.getElementById('windowToggleShortcutNote'), glassInput: document.getElementById('glassInput'), blurInput: document.getElementById('blurInput'), zoomInput: document.getElementById('zoomInput'), resetGlassButton: document.getElementById('resetGlassButton'), resetDepthButton: document.getElementById('resetDepthButton'), resetZoomButton: document.getElementById('resetZoomButton'), saveSettingsButton: document.getElementById('saveSettingsButton'), clientDisplayList: document.getElementById('clientDisplayList'), wslScanInput: document.getElementById('wslScanInput'), wslScanRow: document.getElementById('wslScanRow'), wslPanel: document.getElementById('wslPanel'), openConfigButton: document.getElementById('openConfigButton'), exportAutoInput: document.getElementById('exportAutoInput'), exportAutoDetails: document.getElementById('exportAutoDetails'), exportAutoStatus: document.getElementById('exportAutoStatus'), exportDirLabel: document.getElementById('exportDirLabel'), exportPickDirButton: document.getElementById('exportPickDirButton'), exportIntervalInput: document.getElementById('exportIntervalInput'), exportNowButton: document.getElementById('exportNowButton'), refreshButton: document.getElementById('refreshButton'), minButton: document.getElementById('minButton'), closeButton: document.getElementById('closeButton'), floatingBubbleTab: document.getElementById('floatingBubbleTab')
 };
 Object.assign(els, {
   appTitleMark: document.querySelector('.app-title-mark'),
@@ -616,9 +616,6 @@ function settingsSectionSummary(section) {
       refresh: refreshIntervalLabel(state.settings.limitsRefreshMs)
     });
   }
-  if (section === 'main') {
-    return viewsSummary();
-  }
   if (section === 'window') {
     const behavior = WINDOW_BEHAVIOR_VALUES.includes(state.settings.windowBehavior) ? state.settings.windowBehavior : 'floating';
     return t(`settings.windowBehavior.${behavior}`);
@@ -707,77 +704,6 @@ function hideTotalCompact() {
   if (!els.totalTokensCompact) return;
   els.totalTokensCompact.textContent = '';
   els.totalTokensCompact.classList.add('hidden');
-}
-function positiveNumber(value) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
-}
-// Estimated output tokens per second of model-busy time — roughly the unit an inference
-// benchmark reports, so the number is sanity-checkable against a known model's streaming
-// speed. An estimate, not a measurement: tokscale times a message as a whole rather than
-// its decode phase, and does not break output out per timed message, so the collector counts
-// an entry's output whenever that entry reported a duration (see timedOutputTokens in usage.js).
-//
-// Output rather than total tokens because cache reads dominate the total (typically >90%)
-// and were never generated, which would inflate the rate by two orders of magnitude and
-// read as a bug.
-//
-// Numerator and denominator describe the same entries, so this stays correct when periods are
-// summed across clients and devices — an all-output numerator over a timed-only denominator
-// would read high on any device running a client that reports no durations. Both ride the same
-// tokscale scan as the headline total, so it never divides a live numerator by a stale
-// denominator — the reason it dropped History activeTimeMs.
-function tokenRatePerSecond(period) {
-  const durationMs = positiveNumber(period?.timedDurationMs);
-  const timedOutput = positiveNumber(period?.timedOutputTokens);
-  if (!durationMs || !timedOutput) return 0;
-  return timedOutput * 1000 / durationMs;
-}
-// Every token per minute of the same model-busy window — the burn framing rather than the
-// speed one. This needs no coverage correction: timedTokens is exactly what the timed
-// messages carried, so numerator and denominator describe the identical set of messages.
-function tokenBurnPerMinute(period) {
-  const durationMs = positiveNumber(period?.timedDurationMs);
-  const timed = positiveNumber(period?.timedTokens);
-  if (!durationMs || !timed) return 0;
-  return timed * 60000 / durationMs;
-}
-function renderTokenRate() {
-  if (!els.tokenRateReveal) return;
-  const period = state.stats?.periods?.[state.period];
-  const burn = state.settings?.tokenRateMode === 'burn';
-  const rate = burn ? tokenBurnPerMinute(period) : tokenRatePerSecond(period);
-  // formatCompact rounds, so a sub-0.5 rate would render as a bare "0". Treat that as no
-  // data and stay hidden rather than claim a zero pace.
-  const text = Math.round(rate) > 0
-    ? t(burn ? 'home.tokenRateBurn' : 'home.tokenRate', {
-      value: formatCompact(rate, effectiveCompactTokenUnits(), currentLocale())
-    })
-    : '';
-  els.tokenRateReveal.textContent = text;
-  els.tokenRateReveal.classList.toggle('has-value', Boolean(text));
-}
-// The title mark is the only pixel of the reveal that can take a click: a drag region does
-// not deliver mouse events, so this control and its hover target are the same no-drag island.
-//
-// Deliberately pointer-only, and the mark stays a non-focusable aria-hidden span. A focusable
-// control here is worse than no keyboard path: the window assigns focus to a control when it
-// is shown, and Chromium then derives :focus-visible from that activation rather than from
-// any click, so the reveal reopens with a focus ring on a window the user just summoned with
-// the pointer nowhere near the title. The renderer cannot even clean that up, because it
-// receives no blur, focus or visibilitychange event across a real hide and show. This is a
-// hover-only enhancement layered on a pointer affordance, not a keyboard path that regressed.
-function toggleTokenRateMode() {
-  const next = state.settings?.tokenRateMode === 'burn' ? 'speed' : 'burn';
-  // Repaint before the settings round trip. saveSettings re-syncs the entire settings form,
-  // which is orders of magnitude heavier than this label and would make the switch lag.
-  if (state.settings) state.settings.tokenRateMode = next;
-  renderTokenRate();
-  // Repaint again if the write failed: saveSettings re-reads settings from the main process on
-  // rejection, so state has already reverted to the persisted framing while the label is still
-  // showing the one the click asked for. Without this the label stays wrong until some later
-  // tick silently flips it back.
-  saveSettings({ tokenRateMode: next }).catch(() => renderTokenRate());
 }
 // Scale the exact total to fit the width it is actually given instead of clipping
 // it to an ellipsis. The compact chip (when shown) is flex:0 0 auto and claims its
@@ -1341,7 +1267,7 @@ function prefersReducedMotion() {
 function settleMotionAnimations() {
   cancelNumberAnimation();
   numberAnimValue = state.currentTotal;
-  els.totalTokens.textContent = formatNumber(state.currentTotal);
+  if (els.totalTokens) els.totalTokens.textContent = formatNumber(state.currentTotal);
   updateTotalCompact(state.currentTotal);
   for (const [el, motion] of rowNumberAnimations) {
     cancelAnimationFrame(motion.handle);
@@ -5217,32 +5143,33 @@ function render() {
   const period = state.stats.periods?.[state.period] || { totalTokens: 0, costUsd: 0, clients: {} };
   const nextTotal = Number(period.totalTokens || 0);
   const totalChanged = nextTotal !== state.currentTotal;
-  if (state.suppressInitialNumberAnimation) {
-    cancelNumberAnimation();
-    numberAnimValue = nextTotal;
-    els.totalTokens.textContent = formatNumber(nextTotal);
-    updateTotalCompact(nextTotal);
-    state.suppressInitialNumberAnimation = false;
-  } else if (totalChanged) {
-    // Keep the compact chip visible through the count-up and lock the font to the
-    // widest endpoint first (a downward roll starts wider than it settles), so the
-    // number never vanishes, clips, or resizes mid-roll. Re-fit on completion so a
-    // window resize during the animation, or a downward settle, still ends correct.
-    const animationFrom = numberAnimHandle ? numberAnimValue : state.currentTotal;
-    const widest = formatNumber(nextTotal).length >= formatNumber(animationFrom).length ? nextTotal : animationFrom;
-    els.totalTokens.textContent = formatNumber(widest);
-    updateTotalCompact(nextTotal);
-    animateTotalNumber(els.totalTokens, animationFrom, nextTotal, state.periodMotionActive ? 800 : 1000);
-    pulseLiveDot();
-  } else if (!headlineNumberIsAnimatingTo(nextTotal)) {
-    cancelNumberAnimation();
-    numberAnimValue = nextTotal;
-    els.totalTokens.textContent = formatNumber(nextTotal);
-    updateTotalCompact(nextTotal);
+  if (els.totalTokens) {
+    if (state.suppressInitialNumberAnimation) {
+      cancelNumberAnimation();
+      numberAnimValue = nextTotal;
+      els.totalTokens.textContent = formatNumber(nextTotal);
+      updateTotalCompact(nextTotal);
+      state.suppressInitialNumberAnimation = false;
+    } else if (totalChanged) {
+      // Keep the compact chip visible through the count-up and lock the font to the
+      // widest endpoint first (a downward roll starts wider than it settles), so the
+      // number never vanishes, clips, or resizes mid-roll. Re-fit on completion so a
+      // window resize during the animation, or a downward settle, still ends correct.
+      const animationFrom = numberAnimHandle ? numberAnimValue : state.currentTotal;
+      const widest = formatNumber(nextTotal).length >= formatNumber(animationFrom).length ? nextTotal : animationFrom;
+      els.totalTokens.textContent = formatNumber(widest);
+      updateTotalCompact(nextTotal);
+      animateTotalNumber(els.totalTokens, animationFrom, nextTotal, state.periodMotionActive ? 800 : 1000);
+      pulseLiveDot();
+    } else if (!headlineNumberIsAnimatingTo(nextTotal)) {
+      cancelNumberAnimation();
+      numberAnimValue = nextTotal;
+      els.totalTokens.textContent = formatNumber(nextTotal);
+      updateTotalCompact(nextTotal);
+    }
   }
   state.currentTotal = nextTotal;
-  els.cost.textContent = formatCost(period.costUsd || 0);
-  renderTokenRate();
+  if (els.cost) els.cost.textContent = formatCost(period.costUsd || 0);
   if (!state.refreshBusy && !state.refreshFeedbackTimer) setRefreshButtonState('idle');
   els.shell.classList.toggle('session-mode', state.breakdown === 'session');
   els.shell.classList.toggle('home-mode', state.breakdown === 'home');
@@ -5341,7 +5268,7 @@ function streamFailureText(failure) {
 
 function statusTextFor(mode, connected) {
   if (mode === 'sync') return connected ? 'Live' : 'Offline';
-  if (mode === 'local') return connected ? 'Local' : 'Collecting…';
+  if (mode === 'local') return connected ? 'Live' : 'Starting…';
   return 'Starting…';
 }
 
@@ -5351,11 +5278,12 @@ function liveDotTitle(mode, connected) {
     const reason = streamFailureText(state.streamFailure);
     return reason ? `${t('status.hubStreamOffline')}: ${reason}` : t('status.hubStreamOffline');
   }
-  if (mode === 'local') return connected ? 'Local collector running' : 'Local collector starting…';
+  if (mode === 'local') return connected ? 'Live' : 'Starting…';
   return 'Idle';
 }
 
 function setLiveDot(connected) {
+  if (!els.liveDot) return;
   els.liveDot.classList.toggle('live', Boolean(connected));
   els.liveDot.title = liveDotTitle(state.mode, connected);
 }
@@ -5583,7 +5511,7 @@ function applyAppearanceSettings(settings) {
   // Only full settings objects carry themeColors; glass/zoom preview patches
   // omit it, so we must not wipe theme overrides mid-slider-drag.
   if (settings && 'themeColors' in settings) applyThemeColors(settings.themeColors);
-  els.liveDot.style.display = (settings?.showLiveDot !== false) ? '' : 'none';
+  if (els.liveDot) els.liveDot.style.display = (settings?.showLiveDot !== false) ? '' : 'none';
   els.shell.classList.toggle('desktop-mode', settings?.windowBehavior === 'desktop');
   els.shell.classList.toggle('title-icon-only', settings?.titleIconOnly === true);
   const trayMode = settings && 'trayMode' in settings
@@ -6197,7 +6125,6 @@ function appearancePatchFromControls() {
     systemGlass,
     windowsBackdrop: windowsGlassApi.normalizeWindowsBackdropMode(els.windowsBackdropInput?.value),
     reduceMotion: els.reduceMotionInputs?.find((input) => input.checked)?.value || 'system',
-    showLiveDot: Boolean(els.liveDotInput.checked),
     showToolIcons: Boolean(els.toolIconsInput.checked),
     titleIconOnly: Boolean(els.titleIconInput.checked),
     showCompactTotalTokens: Boolean(els.showCompactTotalTokensInput.checked),
@@ -6439,7 +6366,6 @@ function syncSettingsForm() {
   if (els.windowsBackdropInput) els.windowsBackdropInput.value = windowsGlassApi.normalizeWindowsBackdropMode(state.settings.windowsBackdrop);
   const reduceMotion = motionPreferenceApi.normalize(state.settings.reduceMotion);
   for (const input of els.reduceMotionInputs || []) input.checked = input.value === reduceMotion;
-  els.liveDotInput.checked = state.settings.showLiveDot !== false;
   els.toolIconsInput.checked = state.settings.showToolIcons !== false;
   els.titleIconInput.checked = state.settings.titleIconOnly === true;
   els.showCompactTotalTokensInput.checked = state.settings.showCompactTotalTokens === true;
@@ -6497,7 +6423,7 @@ function syncSettingsForm() {
   renderMimoStatus();
   renderAntigravityStatus();
   renderCopilotStatus();
-  renderViewPreferences();
+  // View-order preferences are removed from Settings in the limits-only shell.
   renderToolPreferences();
   renderLimitProviderCheckboxes();
   renderSettingsSummaries();
@@ -8527,15 +8453,9 @@ els.hubModeOptions.addEventListener('change', async (event) => {
   await refreshStats();
 });
 
-// Both, not just the mark: either one reveals the reading on hover, so a click that only
-// worked on one of them would leave the other looking broken.
-els.appTitleMark?.addEventListener('click', toggleTokenRateMode);
-els.liveDot?.addEventListener('click', toggleTokenRateMode);
-
 els.languageInput?.addEventListener('change', async () => {
   await saveSettings({ language: els.languageInput.value });
   if (!numberAnimHandle) updateTotalCompact(state.currentTotal);
-  renderTokenRate();
 });
 
 els.currencyInput?.addEventListener('change', async () => {
@@ -8728,7 +8648,6 @@ for (const input of els.reduceMotionInputs || []) {
     await saveAppearanceFromControls();
   });
 }
-els.liveDotInput.addEventListener('change', saveAppearanceFromControls);
 els.toolIconsInput.addEventListener('change', async () => {
   state.settings.showToolIcons = els.toolIconsInput.checked;
   renderHomeIfVisible();
@@ -8742,12 +8661,10 @@ els.showCompactTotalTokensInput.addEventListener('change', async () => {
   );
   await saveAppearanceFromControls();
   if (!numberAnimHandle) updateTotalCompact(state.currentTotal);
-  renderTokenRate();
 });
 els.compactTokenUnitsInput?.addEventListener('change', async () => {
   await saveAppearanceFromControls();
   if (!numberAnimHandle) updateTotalCompact(state.currentTotal);
-  renderTokenRate();
 });
 window.addEventListener('resize', () => { if (!numberAnimHandle) fitTotalNumber(); });
 els.swapSettingsRefreshInput.addEventListener('change', () => {
@@ -9791,7 +9708,7 @@ function trayComposerProviderIcon(provider) {
       });
     } catch (_) {}
   }
-  if (id === 'app') return '../../../assets/icons/tray-token-monitor.png';
+  if (id === 'app') return '../../../assets/icons/tray-token-orchestrator.png';
   return window.TokenMonitorTrayProviderIcons.trayProviderIconSources([id])[id] || '';
 }
 
@@ -10152,7 +10069,7 @@ async function deliverTrayProviderIcons(showBadge = state.settings?.showTrayProv
   if (!window.tokenMonitor.setTrayIcons) return;
   const deliveryId = trayProviderIconDeliveryGuard.begin();
   const sources = window.TokenMonitorTrayProviderIcons.trayProviderIconSources(trayIconProviderIds);
-  sources.app = '../../../assets/icons/tray-token-monitor.png';
+  sources.app = '../../../assets/icons/tray-token-orchestrator.png';
   const icons = {};
   for (const [id, path] of Object.entries(sources)) {
     try {
@@ -12763,6 +12680,7 @@ function setupCursorAccountUI() {
     const cancelSignInButton = document.getElementById('antigravityCancelSignInButton');
     signInButton?.addEventListener('click', async () => {
       state.antigravityAccountError = '';
+      renderAntigravityStatus();
       const flowId = crypto.randomUUID();
       state.antigravityLoginFlowId = flowId;
       signInButton.disabled = true;
@@ -12770,17 +12688,30 @@ function setupCursorAccountUI() {
       cancelSignInButton?.classList.remove('hidden');
       let result;
       try { result = await window.tokenMonitor.antigravity.signIn({ flowId }); }
-      catch (_) { result = { ok: false, error: 'Could not start Google sign-in.' }; }
-      signInButton.disabled = false;
-      signInButton.textContent = 'Sign in with Google / Add account';
-      cancelSignInButton?.classList.add('hidden');
-      state.antigravityLoginFlowId = '';
+      catch (error) {
+        result = { ok: false, error: error?.message || 'Could not start Google sign-in.' };
+      }
+      if (state.antigravityLoginFlowId === flowId) {
+        signInButton.disabled = false;
+        signInButton.textContent = 'Sign in with Google / Add account';
+        cancelSignInButton?.classList.add('hidden');
+        state.antigravityLoginFlowId = '';
+      }
       if (!result?.ok) {
-        state.antigravityAccountError = result?.error || 'Could not complete Google sign-in.';
+        state.antigravityAccountError = result?.error
+          || (result?.errorCode === 'invalidRefreshToken'
+            ? 'Google sign-in succeeded, but Antigravity rejected access to its quota API.'
+            : result?.errorCode === 'credentialStorageUnavailable'
+              ? 'Google sign-in succeeded, but the account could not be stored securely.'
+              : result?.errorCode === 'validationUnavailable'
+                ? 'Google sign-in succeeded, but Antigravity quota validation failed. Check your network connection and try again.'
+                : 'Could not complete Google sign-in.');
         renderAntigravityStatus();
         return;
       }
+      state.antigravityAccountError = '';
       state.settings.antigravityManagedAccounts = result.accounts || [];
+      setAntigravityAccountExpanded(true);
       renderAntigravityStatus();
       refreshStats({ force: true }).catch(() => {});
     });

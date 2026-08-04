@@ -436,9 +436,9 @@ function HeroDashboard() {
   }
 
   return (
-    <div className="hero-dashboard" aria-label="Interactive Token Monitor Home dashboard">
+    <div className="hero-dashboard" aria-label="Interactive Token Orchestrator Home dashboard">
       <header className="hero-dashboard-titlebar">
-        <div className="hero-dashboard-mark" aria-label="Token Monitor">
+        <div className="hero-dashboard-mark" aria-label="Token Orchestrator">
           <span aria-hidden="true">Σ</span>
           <i aria-hidden="true"></i>
         </div>

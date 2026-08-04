@@ -104,20 +104,6 @@ test('the utility group is sized by its slot', () => {
   assert.equal(declaration(footer, 'height'), '30px', 'footer action matches the original footer button');
 });
 
-test('swapping makes Refresh the anchor and Settings the left disclosure', () => {
-  const css = readRendererFile('styles.css');
-  const settings = cssRule(css, '.utility-actions.is-swapped .settings-icon-button');
-  const refresh = cssRule(css, '.utility-actions.is-swapped .refresh-button');
-  const reveal = cssRule(css, '.utility-actions.is-swapped:hover .settings-icon-button,\n.utility-actions.is-swapped:has(:focus-visible) .settings-icon-button,\n.shell.settings-open .utility-actions.is-swapped .settings-icon-button');
-
-  assert.equal(declaration(settings, 'position'), 'absolute');
-  assert.match(declaration(settings, 'right'), /100% \+ 6px/);
-  assert.equal(declaration(settings, 'opacity'), '0');
-  assert.equal(declaration(refresh, 'position'), 'relative');
-  assert.equal(declaration(refresh, 'opacity'), '1');
-  assert.equal(declaration(reveal, 'opacity'), '1');
-});
-
 test('pointer-closing Settings clears sticky focus without blurring keyboard activation', () => {
   const app = readRendererFile('app.js');
   const start = app.indexOf("els.settingsButton.addEventListener('click'");
@@ -128,20 +114,15 @@ test('pointer-closing Settings clears sticky focus without blurring keyboard act
   assert.match(handler, /if \(!settingsOpen && event\.detail > 0\) els\.settingsButton\.blur\(\)/);
 });
 
-test('Refresh discloses to the left of Settings on hover and keyboard focus', () => {
+test('Refresh and Settings stay always visible in the footer utility group', () => {
   const css = readRendererFile('styles.css');
   const group = cssRule(css, '.utility-actions');
-  const refresh = cssRule(css, '.utility-actions .refresh-button');
-  const reveal = cssRule(css, '.utility-actions:not(.is-swapped):hover .refresh-button,\n.utility-actions:not(.is-swapped):has(:focus-visible) .refresh-button,\n.shell.settings-open .utility-actions:not(.is-swapped) .refresh-button,\n.utility-actions .refresh-button:is(.is-refreshing, .is-refreshed, .is-refresh-error)');
+  const buttons = cssRule(css, '.utility-actions .settings-icon-button,\n.utility-actions .refresh-button');
 
-  assert.equal(declaration(group, 'width'), '34px', 'settings remains anchored at its original width');
-  assert.match(declaration(refresh, 'right'), /100% \+ 6px/, 'refresh sits to the left of settings');
-  assert.equal(declaration(refresh, 'opacity'), '0', 'refresh is hidden at rest');
-  assert.equal(declaration(refresh, 'pointer-events'), 'none', 'hidden refresh cannot intercept clicks');
-  assert.equal(declaration(reveal, 'opacity'), '1', 'hover/focus reveals refresh');
-  assert.equal(declaration(reveal, 'pointer-events'), 'auto', 'revealed refresh is interactive');
-  assert.match(css, /\.shell\.settings-open \.utility-actions:not\(\.is-swapped\) \.refresh-button/, 'opening Settings pins refresh open');
-  assert.doesNotMatch(css, /\.utility-actions:focus-within \.refresh-button/, 'pointer focus must not pin refresh open after Settings closes');
+  assert.equal(declaration(group, 'width'), 'auto', 'utility group sizes to both buttons');
+  assert.equal(declaration(buttons, 'opacity'), '1', 'both actions are visible at rest');
+  assert.equal(declaration(buttons, 'pointer-events'), 'auto', 'both actions are interactive at rest');
+  assert.doesNotMatch(css, /\.utility-actions:not\(\.is-swapped\):hover \.refresh-button/, 'no hover-only refresh disclosure');
 });
 
 test('tray mode removes title-bar hover controls only while Settings is closed', () => {

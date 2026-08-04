@@ -28,7 +28,6 @@ function cssRule(source, selector) {
 
 const settingsIconAssets = {
   general: 'general.svg',
-  main: 'main.svg',
   window: 'window.svg',
   appearance: 'appearance.svg',
   tools: 'collection.svg',
@@ -88,34 +87,24 @@ test('tool preference rows include compact per-tool pin controls', () => {
   assert.match(body, /onClientPinnedToggle/);
 });
 
-test('view preferences place compact actions beside the note without duplicate headers', () => {
+test('limits-only shell removes Main settings section and view preferences', () => {
   const html = readRendererFile('index.html');
-  const group = html.match(/<div class="settings-subgroup settings-main-screen-group">[\s\S]*?<div id="viewDisplayList"/)?.[0] || '';
-  assert.match(html, /<div class="settings-group settings-collapsible-group settings-main-group"/);
-  // Limits-only shell keeps the markup but hides multi-view chrome.
-  assert.match(group, /<div class="settings-note-row(?:\s+hidden)?">/);
-  assert.match(html, /id="viewDisplayList"\s+class="tool-preference-list hidden"/);
-  assert.match(group, /<p class="settings-note" data-i18n="settings\.views\.note">[\s\S]*?<div class="tool-header-actions">/);
-  assert.match(group, /<div class="tool-header-actions">/);
-  assert.match(group, /id="resetViewDisplayOrderButton"/);
-  assert.match(group, /id="showAllViewsButton"/);
-  assert.doesNotMatch(group, /settings-views-header/);
-  assert.doesNotMatch(group, /settings\.views\.title/);
-  assert.doesNotMatch(group, /viewsSettingsSummary/);
-  assert.doesNotMatch(group, /class="view-preference-head"/);
-
-  const body = functionBody(readRendererFile('app.js'), 'renderViewPreferences', 'renderToolPreferences');
-  assert.match(body, /view-preference-row/);
-  assert.match(body, /settings\.views\.hideView/);
-  assert.match(body, /settings\.views\.showView/);
-  assert.match(body, /createPreferenceOrderHandle\(\{ kind: 'view'/);
+  const app = readRendererFile('app.js');
+  assert.doesNotMatch(html, /settings-main-group/);
+  assert.doesNotMatch(html, /id="currencyInput"/);
+  assert.doesNotMatch(html, /id="viewDisplayList"/);
+  assert.doesNotMatch(html, /settings\.views\.note/);
+  assert.doesNotMatch(html, /data-settings-section="main"/);
+  assert.doesNotMatch(app, /renderViewPreferences\(\);/);
+  assert.match(app, /const SETTINGS_SECTION_IDS = \['general', 'window', 'appearance', 'tools', 'limits', 'sync'\]/);
+  assert.match(html, /total-panel hidden/);
 });
 
 test('settings page uses collapsible icon sections with summaries', () => {
   const html = readRendererFile('index.html');
   assert.match(html, /class="settings-section-toggle"/);
   assert.match(html, /class="settings-section-icon settings-section-icon-general"/);
-  assert.match(html, /class="settings-section-icon settings-section-icon-main"/);
+  assert.doesNotMatch(html, /class="settings-section-icon settings-section-icon-main"/);
   assert.match(html, /class="settings-section-icon settings-section-icon-window"/);
   assert.match(html, /class="settings-section-icon settings-section-icon-tools"/);
   assert.match(html, /class="settings-section-icon settings-section-icon-limits"/);
@@ -123,18 +112,18 @@ test('settings page uses collapsible icon sections with summaries', () => {
   assert.doesNotMatch(html, /data-settings-section="accounts"/);
   assert.match(html, /id="accountsSettingsDetails" class="hidden" aria-hidden="true"/);
   assert.match(html, /id="generalSettingsSummary"/);
-  assert.match(html, /id="mainSettingsSummary"/);
+  assert.doesNotMatch(html, /id="mainSettingsSummary"/);
   assert.match(html, /id="windowSettingsSummary"/);
   assert.match(html, /id="toolsSettingsSummary"/);
   assert.match(html, /id="limitsSettingsSummary"/);
   assert.match(html, /data-settings-section="general"/);
-  assert.match(html, /data-settings-section="main"/);
+  assert.doesNotMatch(html, /data-settings-section="main"/);
   assert.match(html, /data-settings-section="window"/);
   assert.match(html, /data-settings-section="appearance"/);
   assert.match(html, /data-settings-section="tools"/);
   assert.match(html, /id="appearanceSettingsSummary"/);
   assert.match(html, /aria-controls="generalSettingsDetails"/);
-  assert.match(html, /aria-controls="mainSettingsDetails"/);
+  assert.doesNotMatch(html, /aria-controls="mainSettingsDetails"/);
   assert.match(html, /aria-controls="windowSettingsDetails"/);
   assert.match(html, /aria-controls="appearanceSettingsDetails"/);
 
@@ -163,20 +152,8 @@ test('settings page uses collapsible icon sections with summaries', () => {
   }
 });
 
-test('main section holds views; appearance is its own section; window holds behavior and presence', () => {
+test('appearance is its own section; window holds behavior and presence', () => {
   const html = readRendererFile('index.html');
-
-  const main = html.slice(
-    html.indexOf('<div id="mainSettingsDetails"'),
-    html.indexOf('<div class="settings-group settings-collapsible-group settings-window-section-group"')
-  );
-  assert.notEqual(main, '', 'main section should exist');
-  assert.ok(main.indexOf('settings-main-screen-group') >= 0, 'main screen group should be first-class');
-  assert.doesNotMatch(main, /settings-appearance-group/, 'appearance moved out of main');
-  assert.match(main, /id="viewDisplayList"/);
-  assert.match(main, /id="currencyInput"/);
-  assert.doesNotMatch(main, /id="historyEnabledInput"/);
-  assert.doesNotMatch(main, /settings\.language\.title/);
 
   // Appearance is now a top-level section between window and tools, holding the
   // moved glass/zoom controls plus the theme and vendor colour pickers.
@@ -424,7 +401,7 @@ test('general section owns app-level preferences before startup and updates', ()
   const html = readRendererFile('index.html');
   const generalSection = html.slice(
     html.indexOf('<div id="generalSettingsDetails"'),
-    html.indexOf('<div class="settings-group settings-collapsible-group settings-main-group"')
+    html.indexOf('<div class="settings-group settings-collapsible-group settings-window-section-group"')
   );
   assert.match(generalSection, /settings-language-group/);
   assert.ok(generalSection.indexOf('settings-language-group') < generalSection.indexOf('id="startupGroup"'));

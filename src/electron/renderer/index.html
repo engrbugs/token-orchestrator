@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Token Monitor</title>
+    <title>Token Orchestrator</title>
     <script src="floatingBubbleBoot.js"></script>
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -11,16 +11,10 @@
     <main class="shell">
       <header class="titlebar">
         <div>
-          <div class="app-title"><span class="app-title-text">Token Monitor</span><span class="app-title-mark" aria-hidden="true">Σ</span><span id="liveDot" class="live-dot" title="Stream offline"></span><span id="tokenRateReveal" class="token-rate-reveal" aria-hidden="true"></span><span class="app-title-measure" aria-hidden="true">Token Monitor</span></div>
+          <div class="app-title"><span class="app-title-text">Token Orchestrator</span><span class="app-title-mark" aria-hidden="true">Σ</span><span class="app-title-measure" aria-hidden="true">Token Orchestrator</span></div>
           <div id="status" class="status">Starting</div>
         </div>
         <div class="title-controls">
-          <nav class="tabs" aria-label="Period tabs">
-            <span class="tab-indicator" aria-hidden="true"></span>
-            <button class="tab active" data-period="today">DAY</button>
-            <button class="tab" data-period="month">MONTH</button>
-            <button class="tab" data-period="allTime">TOTAL</button>
-          </nav>
           <div class="actions-hotspot" title="Window controls"></div>
           <div class="window-actions">
             <button id="pinButton" class="icon-button" title="Cycle window behavior">⇧</button>
@@ -117,7 +111,7 @@
                       <div class="maintenance-version-item"><span><span data-i18n="settings.tokscale.npm">On npm</span> <small data-i18n="settings.tokscale.latestTag">(latest tag)</small></span><strong id="tokscaleNpm" data-i18n="settings.common.notChecked">Not checked</strong></div>
                       <div id="tokscaleBundledLine" class="maintenance-version-item"><span data-i18n="settings.tokscale.bundled">Bundled</span><strong id="tokscaleBundled">—</strong></div>
                     </div>
-                    <p class="settings-note"><span data-i18n="settings.tokscale.noteBefore">Token Monitor uses tokscale (MIT, open-source) to read token data.</span> <button id="openTokscaleLinkButton" type="button" class="inline-link" data-i18n="settings.tokscale.learnMore">Learn more</button></p>
+                    <p class="settings-note"><span data-i18n="settings.tokscale.noteBefore">Token Orchestrator uses tokscale (MIT, open-source) to read token data.</span> <button id="openTokscaleLinkButton" type="button" class="inline-link" data-i18n="settings.tokscale.learnMore">Learn more</button></p>
                     <div id="tokscaleMessage" class="tokscale-message"></div>
                     <div class="settings-actions maintenance-actions">
                       <button id="checkTokscaleButton" type="button" data-i18n="settings.tokscale.checkNpm">Check npm</button>
@@ -135,53 +129,12 @@
               </div>
             </div>
             <div class="settings-subgroup about-settings">
-              <div class="settings-group-header"><span data-i18n="settings.about.title">About Token Monitor</span><span id="aboutVersion">—</span></div>
+              <div class="settings-group-header"><span data-i18n="settings.about.title">About Token Orchestrator</span><span id="aboutVersion">—</span></div>
               <p class="settings-note" data-i18n="settings.about.description">Open-source AI tool token usage monitor, licensed under MIT.</p>
               <div class="about-settings-links">
                 <button id="openRepositoryButton" type="button" class="inline-link" data-i18n="settings.about.repository">GitHub</button>
                 <button id="openWebsiteButton" type="button" class="inline-link" data-i18n="settings.about.website">Website</button>
                 <button id="reportIssueButton" type="button" class="inline-link" data-i18n="settings.about.reportIssue">Report an issue</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="settings-group settings-collapsible-group settings-main-group">
-          <button class="settings-section-toggle" type="button" data-settings-section="main" aria-expanded="false" aria-controls="mainSettingsDetails">
-            <span class="settings-section-heading"><span class="settings-section-icon settings-section-icon-main" aria-hidden="true"></span><span data-i18n="settings.sections.main">Main</span></span>
-            <span class="settings-section-meta"><span id="mainSettingsSummary" class="settings-section-summary"></span><span class="settings-section-disclosure" aria-hidden="true"></span></span>
-          </button>
-          <div id="mainSettingsDetails" class="settings-section-details hidden">
-            <div class="settings-subgroup settings-main-screen-group">
-              <div class="settings-note-row hidden">
-                <p class="settings-note" data-i18n="settings.views.note">Choose which main views appear and the order of the mode button.</p>
-                <div class="tool-header-actions">
-                  <button id="resetViewDisplayOrderButton" class="tool-header-action" type="button" title="Reset order" aria-label="Reset order" data-i18n-title="settings.views.resetOrder" data-i18n-aria-label="settings.views.resetOrder"><span aria-hidden="true">↺</span></button>
-                  <button id="showAllViewsButton" class="tool-header-action" type="button" title="Show all" aria-label="Show all" data-i18n-title="settings.views.showAll" data-i18n-aria-label="settings.views.showAll"><span class="tool-header-eye" aria-hidden="true"></span></button>
-                </div>
-              </div>
-              <div id="viewDisplayList" class="tool-preference-list hidden"></div>
-              <label class="settings-item"><span class="settings-item-text"><span class="settings-item-title" data-i18n="settings.currency.label">Currency</span></span>
-                <select id="currencyInput">
-                  <option value="USD" data-i18n="settings.currency.usd">USD - US Dollar</option>
-                  <option value="TWD" data-i18n="settings.currency.twd">TWD - New Taiwan Dollar</option>
-                  <option value="HKD" data-i18n="settings.currency.hkd">HKD - Hong Kong Dollar</option>
-                  <option value="CNY" data-i18n="settings.currency.cny">CNY - Chinese Yuan</option>
-                </select>
-              </label>
-              <div id="currencyRateRow" class="currency-rate-row">
-                <div class="settings-item">
-                  <span class="settings-item-text"><span class="settings-item-title" data-i18n="settings.currency.rateMode">Exchange rate</span></span>
-                  <div class="inline-options" role="radiogroup">
-                    <label class="inline-option"><input type="radio" name="currencyRateMode" value="auto" id="currencyRateModeAuto" /><span data-i18n="settings.currency.modeAuto">Auto</span></label>
-                    <label class="inline-option"><input type="radio" name="currencyRateMode" value="manual" id="currencyRateModeManual" /><span data-i18n="settings.currency.modeManual">Manual</span></label>
-                  </div>
-                  <span id="currencyRateStatus" class="settings-note settings-item-desc currency-rate-status"></span>
-                </div>
-                <div id="currencyRateManualField" class="currency-rate-manual-field hidden">
-                  <span class="currency-rate-prefix">1 USD =</span>
-                  <input id="currencyRateOverrideInput" type="number" step="0.0001" min="0" />
-                </div>
               </div>
             </div>
           </div>
@@ -247,7 +200,7 @@
                   <div id="floatingBubbleComposer" class="tray-composer hidden" data-surface="floatingBubble"></div>
                 </div>
               </div>
-              <div class="presence-feature">
+              <div class="presence-feature hidden">
                 <label class="checkbox-label settings-item"><span class="settings-item-text"><span class="settings-item-title" data-i18n="settings.display.showTrayIcon">Show tray/menu bar icon</span></span><input id="showTrayIconInput" type="checkbox" /></label>
                 <div id="trayIconOptions" class="presence-feature-body hidden">
                   <label class="settings-item"><span class="settings-item-text"><span class="settings-item-title" data-i18n="settings.display.trayText">Tray text</span></span>
@@ -268,7 +221,7 @@
                     </select>
                   </label>
                   <div id="trayComposer" class="tray-composer hidden" data-surface="tray"></div>
-                  <label class="checkbox-label settings-item"><span class="settings-item-text"><span class="settings-item-title" data-i18n="settings.display.trayProviderBadge">Show Token Monitor badge on provider icons</span></span><input id="showTrayProviderBadgeInput" type="checkbox" /></label>
+                  <label class="checkbox-label settings-item"><span class="settings-item-text"><span class="settings-item-title" data-i18n="settings.display.trayProviderBadge">Show Token Orchestrator badge on provider icons</span></span><input id="showTrayProviderBadgeInput" type="checkbox" /></label>
                   <label class="checkbox-label settings-item"><span class="settings-item-text"><span class="settings-item-title" data-i18n="settings.display.trayMode">Tray-only mode</span></span><input id="trayModeInput" type="checkbox" /></label>
                   <div id="trayOptions" class="presence-feature-body hidden">
                     <p class="settings-note" data-i18n="settings.display.trayNote">Hide the main window; show a popover from the macOS menu bar or Windows system tray.</p>
@@ -288,7 +241,6 @@
             <div class="settings-subgroup settings-appearance-group">
               <div class="settings-item"><span class="settings-item-text"><span id="windowGlassEffectLabel" class="settings-item-title" data-i18n="settings.appearance.systemGlass">Glass Backdrop</span></span><div class="inline-options" role="radiogroup" aria-labelledby="windowGlassEffectLabel"><label class="inline-option"><input type="radio" name="systemGlassOption" value="system" /><span data-i18n="settings.appearance.glassEffectSystem">System</span></label><label class="inline-option"><input type="radio" name="systemGlassOption" value="off" /><span data-i18n="settings.appearance.glassEffectTransparent">Transparent</span></label></div></div>
               <label id="windowsBackdropRow" class="settings-item hidden"><span class="settings-item-text"><span class="settings-item-title" data-i18n="settings.appearance.windowsBackdrop">Windows Glass Style</span></span><select id="windowsBackdropInput"><option value="acrylic" data-i18n="settings.appearance.windowsBackdropAcrylic">Acrylic</option><option value="accent" data-i18n="settings.appearance.windowsBackdropAccent">Accent Blur (experimental)</option></select><span id="windowsBackdropNote" class="settings-note settings-item-desc hidden" data-i18n="settings.appearance.windowsBackdropNote">Keeps the background translucent and blurred, even when the window is not focused.</span></label>
-              <label class="checkbox-label settings-item"><span class="settings-item-text"><span class="settings-item-title" data-i18n="settings.appearance.liveIndicator">Live Indicator</span></span><input id="liveDotInput" type="checkbox" /></label>
               <label class="checkbox-label settings-item"><span class="settings-item-text"><span class="settings-item-title" data-i18n="settings.appearance.toolIcons">Tool Icons</span></span><input id="toolIconsInput" type="checkbox" /></label>
               <label class="checkbox-label settings-item"><span class="settings-item-text"><span class="settings-item-title" data-i18n="settings.appearance.titleIcon">Use Title Icon</span></span><input id="titleIconInput" type="checkbox" /></label>
               <label class="checkbox-label settings-item"><span class="settings-item-text"><span class="settings-item-title" data-i18n="settings.appearance.compactTotalTokens">Show compact token total</span></span><input id="showCompactTotalTokensInput" type="checkbox" /></label>
@@ -523,7 +475,7 @@
           </div>
         </div>
 
-        <div id="accountsSettingsDetails" class="hidden" aria-hidden="true">
+        <div id="accountsSettingsDetails">
             <div id="claudeAccountGroup" class="settings-group cursor-account-group">
               <button id="claudeSettingsToggle" class="settings-group-header cursor-settings-toggle" type="button" aria-expanded="false" aria-controls="claudeSettingsDetails">
                 <span data-i18n="settings.claude.title">Claude Account</span>
@@ -1223,7 +1175,7 @@
               <div id="hubStatusRow" class="hub-status"></div>
               <div id="hubAddressList" class="hub-address-list"></div>
               <p class="settings-note" data-i18n="settings.sync.hostNote">Other devices connect using one of the URLs above with the shared secret. macOS / Windows may prompt to allow incoming connections the first time. For cross-network use, run Tailscale or ZeroTier on both sides - the virtual IP works the same.</p>
-              <p class="settings-note hub-warning" data-i18n="settings.sync.hostWarning">The hub runs while Token Monitor is running. Quitting (not just closing the window) stops the hub for all connected devices.</p>
+              <p class="settings-note hub-warning" data-i18n="settings.sync.hostWarning">The hub runs while Token Orchestrator is running. Quitting (not just closing the window) stops the hub for all connected devices.</p>
             </div>
             <label><span data-i18n="settings.sync.deviceId">Device ID</span><input id="deviceIdInput" type="text" spellcheck="false" placeholder="auto (hostname)" data-i18n-placeholder="settings.sync.deviceIdPlaceholder" /></label>
             <div class="settings-actions">
@@ -1231,12 +1183,6 @@
             </div>
           </div>
         </div>
-      </section>
-
-      <section class="total-panel">
-        <div class="label-row"><span>TOTAL TOKENS</span></div>
-        <div class="total-number-row"><div id="totalTokens" class="total-number">0</div><div id="totalTokensCompact" class="total-compact hidden" aria-hidden="true"></div></div>
-        <div id="cost" class="cost">$0.00</div>
       </section>
 
       <div id="viewBackRow" class="view-back-row hidden">
@@ -1284,7 +1230,7 @@
         </div>
       </div>
     </main>
-    <button id="floatingBubbleTab" class="floating-bubble-tab" type="button" title="Show Token Monitor" aria-label="Show Token Monitor" data-i18n-title="floatingBubble.expand" data-i18n-aria-label="floatingBubble.expand">
+    <button id="floatingBubbleTab" class="floating-bubble-tab" type="button" title="Show Token Orchestrator" aria-label="Show Token Orchestrator" data-i18n-title="floatingBubble.expand" data-i18n-aria-label="floatingBubble.expand">
       <span id="floatingBubbleContent" aria-hidden="true">Σ</span>
     </button>
     <script src="../../shared/limitBalanceDisplay.js"></script>

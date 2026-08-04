@@ -71,7 +71,10 @@ const {
 const {
   switchAntigravitySystemAccount: switchAntigravitySystemAccountCore
 } = require('../shared/antigravitySystemSwitch');
-const { refreshAccessToken: refreshAntigravityAccessToken } = require('../shared/antigravityAccounts');
+const {
+  fetchAccountQuota: fetchAntigravityAccountQuota,
+  refreshAccessToken: refreshAntigravityAccessToken
+} = require('../shared/antigravityAccounts');
 const {
   normalizeClientDisplayOrder,
   normalizeHiddenClients,
@@ -210,7 +213,7 @@ const { applyWindowsAccentBlur } = require('./windowsBackdrop');
 
 if (!app.isPackaged) loadDotEnv();
 
-const APP_NAME = 'Token Monitor';
+const APP_NAME = 'Token Orchestrator';
 const APP_ICON_PATH = path.join(__dirname, '..', '..', 'assets', 'icon.png');
 
 const DEFAULT_WINDOW = { width: 340, height: 650 };
@@ -357,7 +360,7 @@ function defaultSettings() {
     windowBounds: null,
     windowMaximized: false,
     zoomFactor: 1,
-    showTrayIcon: true,
+    showTrayIcon: false,
     trayMode: false,
     trayContent: 'tokens',
     trayCustomLayout: createDefaultTrayLayout(),
@@ -910,9 +913,28 @@ async function addAntigravityManagedAccount(refreshToken) {
     .map((account) => ({ ...account, refreshToken: readAntigravityCredential(account.id) }));
   const result = createAntigravityManagedAccount(refreshToken, accounts);
   if (!result.ok) return result;
-  const [validation] = await fetchAntigravityLimits({ antigravityManagedAccounts: [result.account] });
+  // Validate THIS OAuth account only. fetchAntigravityLimits() prepends the
+  // local IDE probe when managed accounts are present, so taking providers[0]
+  // would copy the IDE identity onto the new account and make "Add account"
+  // look broken (wrong email / key merge / seeming no-op).
+  let validation;
+  try {
+    validation = await fetchAntigravityAccountQuota(result.account);
+  } catch (error) {
+    return {
+      ok: false,
+      errorCode: error?.status === 'unauthorized' ? 'invalidRefreshToken' : 'validationUnavailable',
+      error: error?.message || 'Antigravity quota validation failed.'
+    };
+  }
   if (validation?.status !== 'ok') {
-    return { ok: false, errorCode: validation?.status === 'unauthorized' ? 'invalidRefreshToken' : 'validationUnavailable' };
+    return {
+      ok: false,
+      errorCode: validation?.status === 'unauthorized' ? 'invalidRefreshToken' : 'validationUnavailable',
+      error: validation?.status === 'unauthorized'
+        ? 'Google sign-in succeeded, but Antigravity rejected access to its quota API.'
+        : 'Google sign-in succeeded, but Antigravity quota validation failed. Check your network connection and try again.'
+    };
   }
   result.account.accountEmail = String(validation.accountEmail || validation.accountLabel || '').trim().slice(0, 254);
   result.account.accountKey = validation.accountKey || result.account.accountKey;
@@ -922,8 +944,15 @@ async function addAntigravityManagedAccount(refreshToken) {
   }
   const cleanAccount = { ...result.account };
   delete cleanAccount.refreshToken;
+  // Dedupe by accountKey and by email so a re-auth of the same Google account
+  // replaces the prior managed row instead of stacking duplicates.
+  const cleanEmail = String(cleanAccount.accountEmail || '').trim().toLowerCase();
   settings.antigravityManagedAccounts = normalizeAntigravityManagedAccounts([
-    ...accounts.filter((account) => account.accountKey !== cleanAccount.accountKey),
+    ...accounts.filter((account) => {
+      if (account.accountKey === cleanAccount.accountKey) return false;
+      if (cleanEmail && String(account.accountEmail || '').trim().toLowerCase() === cleanEmail) return false;
+      return true;
+    }),
     cleanAccount
   ]);
   try {
@@ -953,11 +982,12 @@ async function signInAntigravityAccount(flowId = '') {
       return {
         ...saved,
         flowId,
-        error: saved.errorCode === 'invalidRefreshToken'
-          ? 'Google sign-in succeeded, but Antigravity rejected access to its quota API.'
-          : saved.errorCode === 'credentialStorageUnavailable'
-            ? 'Google sign-in succeeded, but the account could not be stored securely.'
-            : 'Google sign-in succeeded, but Antigravity quota validation failed. Check your network connection and try again.'
+        error: saved.error
+          || (saved.errorCode === 'invalidRefreshToken'
+            ? 'Google sign-in succeeded, but Antigravity rejected access to its quota API.'
+            : saved.errorCode === 'credentialStorageUnavailable'
+              ? 'Google sign-in succeeded, but the account could not be stored securely.'
+              : 'Google sign-in succeeded, but Antigravity quota validation failed. Check your network connection and try again.')
       };
     }
     return { ...saved, flowId };
@@ -2024,7 +2054,7 @@ function reportCredentialStorageError(context, error) {
   try {
     dialog.showErrorBox(
       'Credential storage error',
-      `Token Monitor could not safely access credentials.json (${context}). The save was stopped and previous data was restored where possible. Check the file's JSON and permissions, then restart the app.\n\n${detail}`
+      `Token Orchestrator could not safely access credentials.json (${context}). The save was stopped and previous data was restored where possible. Check the file's JSON and permissions, then restart the app.\n\n${detail}`
     );
   } catch (_) {}
 }
@@ -2886,7 +2916,7 @@ function updateTrayDisplay() {
   if (trayShowsTitle(process.platform)) tray.setTitle(text);
   // Tooltip always shows a useful summary, even in icon-only mode where setTitle is blank.
   const tip = formatTrayText(latestStats, 'both', currency);
-  tray.setToolTip(`Token Monitor - ${tip}`);
+  tray.setToolTip(`Token Orchestrator - ${tip}`);
   // Icon: rendered bars image in bar modes, otherwise the app icon.
   let icon = null;
   if (barsImageMode || trayImageMode || customImageMode) {
@@ -3640,7 +3670,7 @@ async function writeExportTo(dir, periods, options = {}) {
   const files = exportFileSet({
     periods: periods || {},
     history,
-    meta: { generatedAt: new Date().toISOString(), app: { name: 'token-monitor', version: appVersion() } }
+    meta: { generatedAt: new Date().toISOString(), app: { name: 'token-orchestrator', version: appVersion() } }
   });
   await fs.promises.mkdir(dir, { recursive: true });
   // Per-call token so a concurrent auto + manual export to the same folder never
@@ -4044,10 +4074,10 @@ function isAllowedExternalUrl(value) {
   if (isAllowedCodexLoginUrl(value)) return true;
   if (parsed.hostname === 'github.com' && parsed.pathname.startsWith('/junhoyeo/tokscale')) return true;
   if (parsed.hostname === 'www.npmjs.com' && parsed.pathname.startsWith('/package/@tokscale/')) return true;
-  if (parsed.hostname === 'github.com' && parsed.pathname.startsWith('/Javis603/token-monitor')) return true;
+  if (parsed.hostname === 'github.com' && parsed.pathname.startsWith('/engrbugs/token-orchestrator')) return true;
   if (
     (parsed.hostname === 'javis-ai.com' || parsed.hostname === 'www.javis-ai.com')
-    && (parsed.pathname === '/token-monitor' || parsed.pathname.startsWith('/token-monitor/'))
+    && (parsed.pathname === '/token-orchestrator' || parsed.pathname.startsWith('/token-orchestrator/'))
   ) return true;
   if (parsed.hostname === 'claude.ai' && parsed.pathname.startsWith('/settings')) return true;
   if ((parsed.hostname === 'cursor.com' || parsed.hostname === 'www.cursor.com') && parsed.pathname.startsWith('/settings')) return true;

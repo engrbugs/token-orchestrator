@@ -1,8 +1,8 @@
 {
-  "name": "token-monitor",
-  "productName": "Token Monitor",
+  "name": "token-orchestrator",
+  "productName": "Token Orchestrator",
   "version": "0.39.0",
-  "description": "Live token & cost widget for Claude Code, Codex & Hermes — local-first, optional multi-device sync.",
+  "description": "Desktop companion for tracking AI coding usage, limits, history, and multi-device sync.",
   "main": "src/electron/main.js",
   "scripts": {
     "start": "electron .",
@@ -26,7 +26,7 @@
   },
   "build": {
     "appId": "com.javis.tokenmonitor",
-    "productName": "Token Monitor",
+    "productName": "Token Orchestrator",
     "directories": {
       "output": "dist"
     },
@@ -44,7 +44,7 @@
       "node_modules/koffi/**/*"
     ],
     "mac": {
-      "artifactName": "Token-Monitor-${version}-${arch}.${ext}",
+      "artifactName": "Token-Orchestrator-${version}-${arch}.${ext}",
       "target": [
         "dmg",
         "zip"
@@ -78,7 +78,7 @@
       }
     },
     "linux": {
-      "artifactName": "Token-Monitor-${version}.${ext}",
+      "artifactName": "Token-Orchestrator-${version}.${ext}",
       "target": [
         {
           "target": "AppImage",
@@ -90,19 +90,19 @@
       "category": "Development",
       "icon": "assets/icon.png",
       "synopsis": "Live token & cost widget for AI coding tools",
-      "description": "Real-time token, cost, and AI limits widget with multi-device sync for Claude Code, Codex, OpenCode and more."
+      "description": "Desktop companion for tracking AI coding usage, limits, history, and multi-device sync."
     },
     "nsis": {
-      "artifactName": "Token-Monitor-Setup-${version}.${ext}"
+      "artifactName": "Token-Orchestrator-Setup-${version}.${ext}"
     },
     "portable": {
-      "artifactName": "Token-Monitor-${version}.${ext}"
+      "artifactName": "Token-Orchestrator-${version}.${ext}"
     },
     "publish": [
       {
         "provider": "github",
         "owner": "Javis603",
-        "repo": "token-monitor"
+        "repo": "token-orchestrator"
       }
     ]
   },
@@ -111,7 +111,7 @@
     "claude-code",
     "codex",
     "hermes",
-    "token-monitor",
+    "token-orchestrator",
     "token-usage",
     "cost-tracking",
     "llm",
@@ -125,11 +125,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Javis603/token-monitor.git"
+    "url": "git+https://github.com/engrbugs/token-orchestrator.git"
   },
-  "homepage": "https://github.com/Javis603/token-monitor#readme",
+  "homepage": "https://github.com/engrbugs/token-orchestrator#readme",
   "bugs": {
-    "url": "https://github.com/Javis603/token-monitor/issues"
+    "url": "https://github.com/engrbugs/token-orchestrator/issues"
   },
   "dependencies": {
     "@xhayper/discord-rpc": "^1.3.4",
