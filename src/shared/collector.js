@@ -19,7 +19,6 @@ const {
   mergePeriods,
   UNATTRIBUTED_USAGE_CLIENT
 } = require('./usage');
-const { collectWslUsage: collectWslUsageImpl, emptyWslBundle, probeWslState: probeWslStateImpl } = require('./wslUsage');
 const { hermesProfileWatchDirs, resolveHermesHome } = require('./hermesProfiles');
 const { mergeHistories, parseGraphResult, normalizeHistory } = require('./history');
 const { retainDailyHistory } = require('./dailyHistoryArchive');
@@ -652,12 +651,7 @@ async function collectUsageOnce(options) {
   // window (issue #37 follow-up). Injectable for tests.
   const collectedAt = options.now != null ? new Date(options.now) : new Date();
   const runTokscaleFn = options.runTokscale || runTokscale;
-  const collectWsl = options.collectWslUsage || collectWslUsageImpl;
-  const probeWslStateFn = options.probeWslState || probeWslStateImpl;
-  // Injectable only for the WSL-status gate, so tests can exercise the win32
-  // build path on a non-Windows CI box (the real process.platform stays for
-  // tokscale binary resolution, which is genuinely platform-bound).
-  const platformValue = options.platform || process.platform;
+  const _platformValue = options.platform || process.platform;
   const osInfo = options.osInfo === undefined
     ? hostOsInfo()
     : normalizeOsInfo(options.osInfo);
@@ -798,94 +792,10 @@ async function collectUsageOnce(options) {
     propagateTodayProjects(today, Object.values(todayPartitions));
   }
 
-  // WSL contribution (Windows only; no-op elsewhere). Full tick scans running WSL
-  // homes; watch tick reuses the frozen snapshot so the Windows-only delta anchor
-  // above stays exact (issue #15). Merged before deriveClientStatus so a client
-  // that only exists inside WSL still reports as active.
-  //
-  // Three WSL refresh modes:
-  // 1. refreshWsl (interval anchored tick): scan WSL fresh — the 5-minute interval
-  //    is too long to let WSL go stale, but re-scanning tokscale is avoided.
-  // 2. wslAnchor (watch anchored tick): reuse the frozen snapshot — WSL is heavy
-  //    and watch ticks fire every few seconds.
-  // 3. !anchorUsed (full scan): scan WSL as part of the complete rescan.
   const windowsPeriods = { today, month, allTime };
-  let wslBundle = emptyWslBundle();
-  let wslDetected = [];
-  if (normalizedClients && options.wslScanEnabled !== false) {
-    if (options.refreshWsl) {
-      const wslResult = await collectWsl({
-        clients: tokscaleClients,
-        trackedClients: normalizedClients,
-        allTimeSince,
-        now: collectedAt,
-        commandTimeoutMs,
-        runTokscale: runTokscaleFn,
-        resolvePromaPricing: (rows) => resolvePromaPricing(rows, {
-          lookupModelPricing: options.lookupModelPricing,
-          commandTimeoutMs: options.pricingTimeoutMs ?? Math.min(commandTimeoutMs || PROMA_PRICING_LOOKUP_TIMEOUT_MS, PROMA_PRICING_LOOKUP_TIMEOUT_MS),
-          pricingRevision: options.pricingRevision
-        }),
-        logger: options.logger,
-        decoratePeriods: (periods, home) => applySessionTimestamps(periods, home, { scopedHome: true, resolveProjects: projectsEnabled })
-      });
-      wslBundle = wslResult.bundle;
-      wslDetected = wslResult.detected;
-    } else if (options.wslAnchor) {
-      wslBundle = options.wslAnchor;
-    } else if (!anchorUsed) {
-      const wslResult = await collectWsl({
-        clients: tokscaleClients,
-        trackedClients: normalizedClients,
-        allTimeSince,
-        now: collectedAt,
-        commandTimeoutMs,
-        runTokscale: runTokscaleFn,
-        resolvePromaPricing: (rows) => resolvePromaPricing(rows, {
-          lookupModelPricing: options.lookupModelPricing,
-          commandTimeoutMs: options.pricingTimeoutMs ?? Math.min(commandTimeoutMs || PROMA_PRICING_LOOKUP_TIMEOUT_MS, PROMA_PRICING_LOOKUP_TIMEOUT_MS),
-          pricingRevision: options.pricingRevision
-        }),
-        logger: options.logger,
-        decoratePeriods: (periods, home) => applySessionTimestamps(periods, home, { scopedHome: true, resolveProjects: projectsEnabled })
-      });
-      wslBundle = wslResult.bundle;
-      wslDetected = wslResult.detected;
-    }
-  }
-  today = mergePeriods(windowsPeriods.today, wslBundle.today);
-  month = mergePeriods(windowsPeriods.month, wslBundle.month);
-  allTime = mergePeriods(windowsPeriods.allTime, wslBundle.allTime);
-
-  // WSL attribution (Windows only; null elsewhere). detected = markers found,
-  // withData = clients whose WSL scan or local parser returned tokens. The gap
-  // is the diagnostic (e.g. Hermes detected but unreadable over 9P).
-  //
-  // Like wslBundle, this is FROZEN between full scans: anchored watch ticks
-  // (which skip the WSL scan) reuse the snapshot via options.wslStatus instead
-  // of re-probing — otherwise every few-second watch tick would spawn wsl.exe
-  // and stall the fast refresh path (issue #15's load concern).
-  let wslStatus = null;
-  if (platformValue === 'win32' && normalizedClients) {
-    const reuseFrozen = !options.refreshWsl && options.wslAnchor && options.wslStatus;
-    if (options.wslScanEnabled === false) {
-      wslStatus = { state: 'disabled', detected: [], withData: [] };
-    } else if (reuseFrozen) {
-      wslStatus = options.wslStatus;
-    } else {
-      const probe = probeWslStateFn({});
-      if (probe !== 'ok') {
-        wslStatus = { state: probe, detected: [], withData: [] };
-      } else {
-        const withData = Object.keys(wslBundle.allTime.clients || {});
-        const state = withData.length > 0 ? 'active' : 'no-data';
-        wslStatus = { state, detected: wslDetected, withData };
-      }
-    }
-  }
 
   if (typeof options.onAnchorComputed === 'function') {
-    options.onAnchorComputed({ windowsPeriods, todayPartitions, wslBundle, wslStatus });
+    options.onAnchorComputed({ windowsPeriods, todayPartitions });
   }
 
   const summary = {
@@ -900,7 +810,6 @@ async function collectUsageOnce(options) {
     projectsEnabled,
     trackedClients: normalizedClients ? normalizedClients.split(',') : [],
     clientStatus: deriveClientStatus(normalizedClients, allTime),
-    wslStatus,
     periodWindows: computePeriodWindows(collectedAt),
     today,
     month,

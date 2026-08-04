@@ -229,39 +229,21 @@ const LIMIT_CAPABILITY_TAG_KEYS = {
 };
 const deviceAccent = '#73bdf5';
 const deviceStaleColor = '#8c97a7';
-const baseBreakdownOrder = ['tool', 'device', 'model', 'project', 'session'];
+// Limits-only product shell. Other breakdown helpers still exist in this file
+// but are not reachable through VIEW_DISPLAY_OPTIONS / availableBreakdownIds.
+const baseBreakdownOrder = [];
 const VIEW_DISPLAY_OPTIONS = [
-  { id: 'home', labelKey: 'views.home' },
-  { id: 'tool', labelKey: 'views.tool' },
-  { id: 'status', labelKey: 'views.status' },
-  { id: 'device', labelKey: 'views.device' },
-  { id: 'model', labelKey: 'views.model' },
-  { id: 'project', labelKey: 'views.project' },
-  { id: 'session', labelKey: 'views.session' },
-  { id: 'limits', labelKey: 'views.limits' },
-  { id: 'trends', labelKey: 'views.trends' }
+  { id: 'limits', labelKey: 'views.limits' }
 ];
 const viewPeriodValues = new Set(['today', 'month', 'allTime']);
-const viewBreakdownValues = new Set(['home', ...baseBreakdownOrder, 'status', 'limits', 'trends']);
+const viewBreakdownValues = new Set(['limits']);
 const HOME_MODULE_OPTIONS = [
-  { id: 'limits', labelKey: 'home.limits', viewId: 'limits' },
-  { id: 'tool', labelKey: 'home.tools', viewId: 'tool' },
-  { id: 'device', labelKey: 'home.devices', viewId: 'device' },
-  { id: 'model', labelKey: 'home.models', viewId: 'model' },
-  { id: 'trends', labelKey: 'home.activity', viewId: 'trends' }
+  { id: 'limits', labelKey: 'home.limits', viewId: 'limits' }
 ];
 const VIEW_SWITCHER_LONG_PRESS_MS = 420;
 const VIEW_SWITCHER_HOVER_CLOSE_MS = 160;
 const VIEW_ICON_CLASSES = {
-  home: 'view-icon-home',
-  tool: 'view-icon-tool',
-  status: 'view-icon-status',
-  device: 'view-icon-device',
-  model: 'view-icon-model',
-  project: 'view-icon-project',
-  session: 'view-icon-session',
-  limits: 'view-icon-limits',
-  trends: 'view-icon-trends'
+  limits: 'view-icon-limits'
 };
 const SERVICE_STATUS_PLACEHOLDERS = [
   { id: 'claude', label: 'Claude', pageUrl: 'https://status.claude.com' },
@@ -287,7 +269,7 @@ function normalizeInitialViewValue(value, allowed, fallback) {
   return allowed.has(raw) ? raw : fallback;
 }
 
-const state = { period: normalizeInitialViewValue(initialViewState.period, viewPeriodValues, 'today'), appUpdate: null, breakdown: normalizeInitialViewValue(initialViewState.breakdown, viewBreakdownValues, 'home'), viewSwitcherOpen: false, viewSwitcherHasOpened: false, limitDetailTooltipHasOpened: false, limitDetailTooltipActive: false, limitDetailTooltipRenderPending: false, settings: null, stats: null, homeHistory: null, homeHistoryBusy: false, homeHistoryRequested: false, homeHistorySignature: '', homeHistoryRetries: 0, homeHistoryRetryTimer: null, homeActivityScrollLeft: null, homeActivityFollowEnd: true, homeActivityResizeObserver: null, serviceStatus: null, serviceStatusBusy: false, serviceProvidersExpanded: false, trendSettingsExpanded: false, trendsActivating: false, homeSettingsExpanded: false, homeLimitSettingsExpanded: false, limitProviderSettingsExpanded: '', serviceStatusTicker: null, refreshTimer: null, refreshBusy: false, refreshFeedbackTimer: null, currentTotal: 0, rowSignature: '', streamConnected: false, streamFailure: null, mode: 'idle', appInfo: null, tokscaleStatus: null, tokscaleCheck: null, tokscaleBusy: false, hubInfo: null, cursorAccount: { status: null, error: '' }, cursorAccountExpanded: false, codexAccountExpanded: false, codexAccountError: '', codexSignInBusy: false, codexSignInFlowId: '', codexLoginUrl: '', codexLoginStatus: '', codexLoginOutput: '', codexWorkspaceChoices: [], codexWorkspaceId: '', codexActiveAccount: null, codexPendingActiveAccount: null, codexPendingActiveAccountUntil: 0, codexPendingActiveAccountTimer: null, codexSystemSwitchingAccountId: '', codexSystemSwitchErrorAccountId: '', codexSystemSwitchError: '', codexSwitchPopoverHasOpened: false, codexSwitchPopoverActive: false, codexSwitchPopoverRenderPending: false, antigravityAccountExpanded: false, antigravityAccountError: '', antigravityLoginFlowId: '', antigravityActiveAccount: null, antigravityPendingActiveAccount: null, antigravityPendingActiveAccountUntil: 0, antigravityPendingActiveAccountTimer: null, antigravitySystemSwitchingAccountId: '', antigravitySystemSwitchErrorAccountId: '', antigravitySystemSwitchError: '', antigravitySwitchPopoverHasOpened: false, antigravitySwitchPopoverActive: false, antigravitySwitchPopoverRenderPending: false, customPricingExpanded: false, claudeAccountExpanded: false, claudePendingCheckSince: 0, opencodeProfileCount: 0, opencodeCookieExpanded: false, openrouterProfileCount: 0, openrouterAccountExpanded: false, thirdPartyProfileCount: 0, thirdPartyAccountExpanded: false, deepseekAccountExpanded: false, deepseekPendingCheckSince: 0, minimaxAccountExpanded: false, minimaxPendingCheckSince: 0, zaiAccountExpanded: false, zaiPendingCheckSince: 0, zaiteamAccountExpanded: false, zaiteamPendingCheckSince: 0, volcengineAccountExpanded: false, volcenginePendingCheckSince: 0, qoderAccountExpanded: false, qoderPendingCheckSince: 0, kimiAccountExpanded: false, kimiPendingCheckSince: 0, ollamaAccountExpanded: false, ollamaPendingCheckSince: 0, mimoAccountExpanded: false, mimoAccountError: '', copilotAccountExpanded: false, copilotManualExpanded: false, copilotPendingCheckSince: 0, copilotSignInBusy: false, copilotSignInCancelable: false, copilotSignInFlowId: '', copilotAuthorizeMessage: '', copilotLoginStatus: '', copilotErrorMessage: '', floatingBubble: initialFloatingBubble, suppressInitialNumberAnimation: window.__TOKEN_MONITOR_SUPPRESS_INITIAL_NUMBER_ANIMATION__ === true, openSession: null, detailSort: 'time', recordingWindowShortcut: false, windowShortcutInvalid: false };
+const state = { period: normalizeInitialViewValue(initialViewState.period, viewPeriodValues, 'today'), appUpdate: null, breakdown: normalizeInitialViewValue(initialViewState.breakdown, viewBreakdownValues, 'limits'), viewSwitcherOpen: false, viewSwitcherHasOpened: false, limitDetailTooltipHasOpened: false, limitDetailTooltipActive: false, limitDetailTooltipRenderPending: false, settings: null, stats: null, homeHistory: null, homeHistoryBusy: false, homeHistoryRequested: false, homeHistorySignature: '', homeHistoryRetries: 0, homeHistoryRetryTimer: null, homeActivityScrollLeft: null, homeActivityFollowEnd: true, homeActivityResizeObserver: null, serviceStatus: null, serviceStatusBusy: false, serviceProvidersExpanded: false, trendSettingsExpanded: false, trendsActivating: false, homeSettingsExpanded: false, homeLimitSettingsExpanded: false, limitProviderSettingsExpanded: '', serviceStatusTicker: null, refreshTimer: null, refreshBusy: false, refreshFeedbackTimer: null, currentTotal: 0, rowSignature: '', streamConnected: false, streamFailure: null, mode: 'idle', appInfo: null, tokscaleStatus: null, tokscaleCheck: null, tokscaleBusy: false, hubInfo: null, cursorAccount: { status: null, error: '' }, cursorAccountExpanded: false, codexAccountExpanded: false, codexAccountError: '', codexSignInBusy: false, codexSignInFlowId: '', codexLoginUrl: '', codexLoginStatus: '', codexLoginOutput: '', codexWorkspaceChoices: [], codexWorkspaceId: '', codexActiveAccount: null, codexPendingActiveAccount: null, codexPendingActiveAccountUntil: 0, codexPendingActiveAccountTimer: null, codexSystemSwitchingAccountId: '', codexSystemSwitchErrorAccountId: '', codexSystemSwitchError: '', codexSwitchPopoverHasOpened: false, codexSwitchPopoverActive: false, codexSwitchPopoverRenderPending: false, antigravityAccountExpanded: false, antigravityAccountError: '', antigravityLoginFlowId: '', antigravityActiveAccount: null, antigravityPendingActiveAccount: null, antigravityPendingActiveAccountUntil: 0, antigravityPendingActiveAccountTimer: null, antigravitySystemSwitchingAccountId: '', antigravitySystemSwitchErrorAccountId: '', antigravitySystemSwitchError: '', antigravitySwitchPopoverHasOpened: false, antigravitySwitchPopoverActive: false, antigravitySwitchPopoverRenderPending: false, customPricingExpanded: false, claudeAccountExpanded: false, claudePendingCheckSince: 0, opencodeProfileCount: 0, opencodeCookieExpanded: false, openrouterProfileCount: 0, openrouterAccountExpanded: false, thirdPartyProfileCount: 0, thirdPartyAccountExpanded: false, deepseekAccountExpanded: false, deepseekPendingCheckSince: 0, minimaxAccountExpanded: false, minimaxPendingCheckSince: 0, zaiAccountExpanded: false, zaiPendingCheckSince: 0, zaiteamAccountExpanded: false, zaiteamPendingCheckSince: 0, volcengineAccountExpanded: false, volcenginePendingCheckSince: 0, qoderAccountExpanded: false, qoderPendingCheckSince: 0, kimiAccountExpanded: false, kimiPendingCheckSince: 0, ollamaAccountExpanded: false, ollamaPendingCheckSince: 0, mimoAccountExpanded: false, mimoAccountError: '', copilotAccountExpanded: false, copilotManualExpanded: false, copilotPendingCheckSince: 0, copilotSignInBusy: false, copilotSignInCancelable: false, copilotSignInFlowId: '', copilotAuthorizeMessage: '', copilotLoginStatus: '', copilotErrorMessage: '', floatingBubble: initialFloatingBubble, suppressInitialNumberAnimation: window.__TOKEN_MONITOR_SUPPRESS_INITIAL_NUMBER_ANIMATION__ === true, openSession: null, detailSort: 'time', recordingWindowShortcut: false, windowShortcutInvalid: false };
 state.homeHistoryLoadedSignature = '';
 state.homeHistoryRetrySignature = '';
 state.homeReturnVisible = false;
@@ -2002,24 +1984,19 @@ function rowsForPeriod(period) {
 }
 
 function limitViewAvailable() {
-  return enabledLimitProviderSet().size > 0;
+  // Limits-only product: always expose the Limits view, even before providers
+  // are configured, so the panel can show empty/setup state.
+  return true;
 }
 
 function effectiveViewDisplayOrderValue() {
   const raw = state.settings?.viewDisplayOrder;
-  const rawIds = String(raw || '').split(',').map((item) => item.trim().toLowerCase()).filter(Boolean);
-  if (rawIds.length > 0 && !rawIds.includes('home')) {
-    const normalized = viewDisplayPreferencesApi.normalizeViewDisplayOrder(raw, VIEW_DISPLAY_OPTIONS);
-    return ['home', ...normalized.filter((id) => id !== 'home')].join(',');
-  }
-  return raw;
+  if (!raw) return 'limits';
+  return viewDisplayPreferencesApi.normalizeViewDisplayOrder(raw, VIEW_DISPLAY_OPTIONS).join(',') || 'limits';
 }
 
 function availableBreakdownIds() {
-  const order = ['home', baseBreakdownOrder[0], 'status', 'trends', ...baseBreakdownOrder.slice(1)];
-  let available = state.settings?.historyEnabled === false ? order.filter((id) => id !== 'trends') : order;
-  if (state.settings?.projectsEnabled === false) available = available.filter((id) => id !== 'project');
-  return limitViewAvailable() ? [...available, 'limits'] : available;
+  return ['limits'];
 }
 
 function visibleBreakdownOrder() {
@@ -2105,8 +2082,15 @@ function configuredLimitProviderOrder() {
 
 function configuredLimitProviderSelection() {
   const raw = state.settings?.limitProviders;
-  const source = raw === undefined || raw === null ? DEFAULT_LIMIT_PROVIDER_ORDER : raw;
-  return limitProviderOrderApi.normalizeLimitProviderSelection(source, LIMIT_PROVIDERS);
+  // Treat empty string the same as missing — fall back to showing all providers.
+  // An empty string comes from the default (no env var configured) and should
+  // not suppress every limit card.
+  const source = (raw === undefined || raw === null || raw === '')
+    ? DEFAULT_LIMIT_PROVIDER_ORDER
+    : raw;
+  const selection = limitProviderOrderApi.normalizeLimitProviderSelection(source, LIMIT_PROVIDERS);
+  // If still empty after normalization, default to all known providers.
+  return selection.length > 0 ? selection : LIMIT_PROVIDERS.map((p) => p.id);
 }
 
 function enabledLimitProviderSet() {
@@ -4313,14 +4297,14 @@ function homeModuleIds() {
 
 function nextBreakdown(value) {
   const order = visibleBreakdownOrder();
-  if (order.length === 0) return 'home';
+  if (order.length === 0) return 'limits';
   const index = order.indexOf(value);
   return order[(index + 1) % order.length] || order[0];
 }
 
 function viewSwitcherIcon(id) {
   const icon = document.createElement('span');
-  icon.className = `view-switcher-icon ${VIEW_ICON_CLASSES[id] || 'view-icon-home'}`;
+  icon.className = `view-switcher-icon ${VIEW_ICON_CLASSES[id] || 'view-icon-limits'}`;
   icon.setAttribute('aria-hidden', 'true');
   return icon;
 }
@@ -4374,7 +4358,15 @@ function setViewSwitcherOpen(open, { focusMenu = false, focusDisclosure = false 
 function renderViewSwitcher({ focusMenu = false, focusDisclosure = false } = {}) {
   if (!els.viewSwitcher) return;
   const order = visibleBreakdownOrder();
-  const currentId = order.includes(state.breakdown) ? state.breakdown : (order[0] || 'home');
+  // Limits-only (or any single-view shell): hide the mode switcher entirely.
+  if (order.length <= 1) {
+    state.viewSwitcherOpen = false;
+    els.viewSwitcher.replaceChildren();
+    els.viewSwitcher.classList.add('hidden');
+    return;
+  }
+  els.viewSwitcher.classList.remove('hidden');
+  const currentId = order.includes(state.breakdown) ? state.breakdown : (order[0] || 'limits');
   const currentLabel = viewLabelById(currentId);
   const nextId = nextBreakdown(currentId);
   const nextLabel = viewLabelById(nextId);
@@ -8101,9 +8093,7 @@ async function onLimitProviderToggle() {
   const checked = Array.from(els.limitProviderCheckboxes.querySelectorAll('input[type=checkbox]'))
     .filter((cb) => cb.checked)
     .map((cb) => cb.dataset.provider);
-  if (checked.length === 0 && state.breakdown === 'limits') {
-    setBreakdown('tool');
-  }
+  // Limits-only shell stays on Limits even when every provider is unchecked.
   await saveSettings({ limitProviders: checked.join(','), limitsEnabled: checked.length > 0 });
   clearDisabledLimitProviderPendingChecks(new Set(checked));
   // settings:update reconfigures LimitsRuntime immediately. Its existing

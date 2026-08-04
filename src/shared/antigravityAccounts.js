@@ -23,6 +23,9 @@ const LOAD_CODE_ASSIST_URLS = [
   'https://cloudcode-pa.googleapis.com/v1internal:loadCodeAssist',
   'https://daily-cloudcode-pa.googleapis.com/v1internal:loadCodeAssist'
 ];
+// Prefer the daily host first — same order as Antigravity's own client /
+// ag-multi-account-switchboard. With the Antigravity User-Agent below, this is
+// what returns the real agent model pools instead of the consumer stub.
 const RETRIEVE_QUOTA_URLS = [
   'https://daily-cloudcode-pa.googleapis.com/v1internal:retrieveUserQuota',
   'https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuota'
@@ -30,6 +33,10 @@ const RETRIEVE_QUOTA_URLS = [
 
 const CLIENT_ID = '[REDACTED_GOOGLE_OAUTH_CLIENT_ID]';
 const CLIENT_SECRET = '[REDACTED_GOOGLE_OAUTH_CLIENT_SECRET]';
+// Google's cloudcode-pa endpoints gate Antigravity agent quota behind this UA.
+// A generic Node fetch UA gets the post-migration consumer stub (4 Gemini models
+// all remainingFraction:1, no enrollment). Discovered via ag-multi-account-switchboard.
+const ANTIGRAVITY_USER_AGENT = 'Antigravity/4.1.29 Chrome/132.0.6834.160 Electron/39.2.3';
 
 function cleanText(value, max = 512) {
   return String(value || '').trim().slice(0, max);
@@ -121,9 +128,89 @@ function oauthSuccessHtml(email) {
   return `<!doctype html><meta charset="utf-8"><title>Account added</title><p>Google account <strong>${safeEmail}</strong> was added. You can close this window.</p>`;
 }
 
+function managedModelSlug(modelId) {
+  return String(modelId || '').toLowerCase().split('/').pop() || '';
+}
+
+// Chat/tab/autocomplete rows ride alongside agent models in retrieveUserQuota and
+// often stay at remainingFraction:1 even when every agent pool is exhausted. They
+// must not drive the Gemini / Claude-GPT summary bars.
+function isManagedAgentModel(modelId) {
+  const slug = managedModelSlug(modelId);
+  if (!slug) return false;
+  if (slug.startsWith('chat_') || slug.startsWith('tab_')) return false;
+  if (slug.includes('placeholder')) return false;
+  return true;
+}
+
 function managedQuotaGroup(modelId) {
-  const value = String(modelId || '').toLowerCase();
+  const value = managedModelSlug(modelId);
   return value.includes('claude') || value.includes('gpt') ? 'Claude/GPT' : 'Gemini';
+}
+
+function cloudCodeHeaders(accessToken) {
+  return {
+    authorization: `Bearer ${accessToken}`,
+    'content-type': 'application/json',
+    accept: 'application/json',
+    'user-agent': ANTIGRAVITY_USER_AGENT
+  };
+}
+
+function extractProjectId(load) {
+  const raw = load?.cloudaicompanionProject ?? load?.cloudAiCompanionProject ?? load?.project;
+  if (typeof raw === 'string') {
+    const project = raw.trim();
+    return project || null;
+  }
+  if (raw && typeof raw === 'object') {
+    const project = cleanText(raw.id || raw.projectId || raw.name, 256);
+    return project || null;
+  }
+  return null;
+}
+
+function loadCodeAssistEnrolled(load) {
+  if (!load || typeof load !== 'object') return false;
+  if (cleanText(load.currentTier?.id || load.current_tier?.id || load.currentTier?.name || load.current_tier?.name, 128)) {
+    return true;
+  }
+  // Hard-coded enterprise fallback is not enrollment — only a real project id counts.
+  return Boolean(extractProjectId(load));
+}
+
+function bucketRemainingFraction(bucket) {
+  if (!bucket || typeof bucket !== 'object') return null;
+  const direct = bucket.remainingFraction ?? bucket.remaining_fraction;
+  if (typeof direct === 'number' && Number.isFinite(direct)) return direct;
+  if (typeof direct === 'string' && direct.trim() !== '') {
+    const parsed = Number(direct);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  const remaining = bucket.remaining;
+  if (typeof remaining?.remainingFraction === 'number' && Number.isFinite(remaining.remainingFraction)) {
+    return remaining.remainingFraction;
+  }
+  if (remaining?.case === 'remainingFraction' && typeof remaining.value === 'number' && Number.isFinite(remaining.value)) {
+    return remaining.value;
+  }
+  if (typeof remaining === 'number' && Number.isFinite(remaining)) return remaining;
+  return null;
+}
+
+// Without the Antigravity User-Agent, unenrolled OAuth tokens still receive a
+// consumer stub: a handful of Gemini models all remainingFraction:1 and no
+// currentTier/project. Treat "all full agent rows, no enrollment, no partial
+// usage" as non-authoritative so a missing UA can't resurrect the false 100%.
+function isNonAuthoritativeQuota({ load, buckets }) {
+  const fractions = (Array.isArray(buckets) ? buckets : [])
+    .filter((bucket) => isManagedAgentModel(bucket?.modelId || bucket?.model_id))
+    .map((bucket) => bucketRemainingFraction(bucket))
+    .filter((value) => value !== null);
+  if (fractions.length === 0) return true;
+  if (fractions.some((value) => value < 1)) return false;
+  if (loadCodeAssistEnrolled(load)) return false;
+  return true;
 }
 
 async function startAntigravityOAuthFlow(options = {}, deps = {}) {
@@ -227,41 +314,63 @@ async function startAntigravityOAuthFlow(options = {}, deps = {}) {
 
 async function fetchAccountQuota(account, deps = {}) {
   const tokens = await (deps.refreshAccessToken || refreshAccessToken)(account.refreshToken, deps);
-  const headers = {
-    authorization: `Bearer ${tokens.access_token}`,
-    'content-type': 'application/json'
+  const accessToken = tokens.access_token;
+  const userInfoHeaders = { authorization: `Bearer ${accessToken}` };
+  const cloudHeaders = cloudCodeHeaders(accessToken);
+  const userInfo = await jsonRequest(GOOGLE_USERINFO_URL, { headers: userInfoHeaders }, deps).catch(() => ({}));
+  const email = cleanText(userInfo.email || account.accountEmail, 254);
+  const providerBase = {
+    provider: 'antigravity',
+    accountKey: accountKey(email, account.refreshToken),
+    accountLabel: email || account.accountLabel || 'Antigravity',
+    accountEmail: email,
+    source: 'api',
+    sourceDetail: 'managed',
+    updatedAt: new Date((deps.now || Date.now)()).toISOString()
   };
-  const userInfo = await jsonRequest(GOOGLE_USERINFO_URL, { headers }, deps).catch(() => ({}));
   let load;
   let lastError;
   for (const url of LOAD_CODE_ASSIST_URLS) {
     try {
       load = await jsonRequest(url, {
-        method: 'POST', headers,
+        method: 'POST',
+        headers: cloudHeaders,
         body: JSON.stringify({ metadata: { ideType: 'ANTIGRAVITY' } })
       }, deps);
       break;
     } catch (error) { lastError = error; }
   }
   if (!load) throw lastError || new Error('Antigravity account information unavailable');
-  const project = load.cloudaicompanionProject || 'cloudaicompanion-enterprise';
+  // Never invent a project id. Missing project + missing UA was how we used to
+  // land on the consumer all-1.0 stub. With the Antigravity UA, loadCodeAssist
+  // returns the real project; if it doesn't, still try {} rather than a fake id.
+  const project = extractProjectId(load);
   let quota;
   for (const url of RETRIEVE_QUOTA_URLS) {
     try {
       quota = await jsonRequest(url, {
-        method: 'POST', headers,
-        body: JSON.stringify({ project })
+        method: 'POST',
+        headers: cloudHeaders,
+        body: JSON.stringify(project ? { project } : {})
       }, deps);
       break;
     } catch (error) { lastError = error; }
   }
   if (!quota) throw lastError || new Error('Antigravity quota unavailable');
   const buckets = Array.isArray(quota.buckets) ? quota.buckets : [];
+  if (isNonAuthoritativeQuota({ load, buckets })) {
+    return normalizeLimitProvider({
+      ...providerBase,
+      status: 'unavailable',
+      windows: []
+    });
+  }
   const groups = new Map();
   for (const bucket of buckets) {
-    const remaining = Number(bucket.remainingFraction ?? bucket.remaining_fraction);
-    if (!Number.isFinite(remaining)) continue;
     const model = cleanText(bucket.modelId || bucket.model_id, 160);
+    if (!isManagedAgentModel(model)) continue;
+    const remaining = bucketRemainingFraction(bucket);
+    if (remaining === null) continue;
     const label = managedQuotaGroup(model);
     const reset = bucket.resetTime || bucket.reset_time || null;
     const existing = groups.get(label);
@@ -280,16 +389,16 @@ async function fetchAccountQuota(account, deps = {}) {
       showMeter: true
     }] : [];
   });
-  const email = cleanText(userInfo.email || account.accountEmail, 254);
+  if (windows.length === 0) {
+    return normalizeLimitProvider({
+      ...providerBase,
+      status: 'unavailable',
+      windows: []
+    });
+  }
   return normalizeLimitProvider({
-    provider: 'antigravity',
-    accountKey: accountKey(email, account.refreshToken),
-    accountLabel: email || account.accountLabel || 'Antigravity',
-    accountEmail: email,
-    source: 'api',
-    sourceDetail: 'managed',
+    ...providerBase,
     status: 'ok',
-    updatedAt: new Date((deps.now || Date.now)()).toISOString(),
     windows
   });
 }
@@ -323,5 +432,12 @@ module.exports = {
   fetchAccountQuota,
   startAntigravityOAuthFlow,
   normalizeAntigravityManagedAccounts,
-  refreshAccessToken
+  refreshAccessToken,
+  // Test hooks
+  ANTIGRAVITY_USER_AGENT,
+  _bucketRemainingFraction: bucketRemainingFraction,
+  _extractProjectId: extractProjectId,
+  _isManagedAgentModel: isManagedAgentModel,
+  _isNonAuthoritativeQuota: isNonAuthoritativeQuota,
+  _loadCodeAssistEnrolled: loadCodeAssistEnrolled
 };

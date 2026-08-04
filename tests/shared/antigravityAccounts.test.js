@@ -4,27 +4,39 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 const {
+  ANTIGRAVITY_USER_AGENT,
   createAntigravityManagedAccount,
   fetchAntigravityManagedLimits,
   normalizeAntigravityManagedAccounts,
-  startAntigravityOAuthFlow
+  startAntigravityOAuthFlow,
+  _isManagedAgentModel,
+  _isNonAuthoritativeQuota,
+  _loadCodeAssistEnrolled
 } = require('../../src/shared/antigravityAccounts');
 
 function response(body, status = 200) {
   return { ok: status >= 200 && status < 300, status, json: async () => body };
 }
 
-function fakeFetch() {
+function fakeFetch(overrides = {}) {
   return async (url, init = {}) => {
+    if (typeof overrides.onRequest === 'function') overrides.onRequest(url, init);
     if (url.includes('oauth2.googleapis.com')) return response({ access_token: `access-${init.body}` });
     if (url.includes('userinfo')) return response({ email: 'agy@example.com' });
-    if (url.includes('loadCodeAssist')) return response({ cloudaicompanionProject: 'project-1' });
-    if (url.includes('retrieveUserQuota')) return response({ buckets: [
-      { modelId: 'models/gemini-3-pro', remainingFraction: 0.75, resetTime: '2027-01-01T00:00:00Z' },
-      { modelId: 'models/gemini-3-flash', remainingFraction: 0.9, resetTime: '2027-01-01T00:00:00Z' },
-      { modelId: 'models/claude-sonnet', remainingFraction: 0.8, resetTime: '2027-01-02T00:00:00Z' },
-      { modelId: 'models/gpt-oss', remainingFraction: 0.7, resetTime: '2027-01-01T12:00:00Z' }
-    ] });
+    if (url.includes('loadCodeAssist')) {
+      return response(overrides.load || { cloudaicompanionProject: 'project-1', currentTier: { id: 'free-tier', name: 'Antigravity' } });
+    }
+    if (url.includes('retrieveUserQuota')) {
+      return response(overrides.quota || { buckets: [
+        { modelId: 'models/gemini-3-pro', remainingFraction: 0.75, resetTime: '2027-01-01T00:00:00Z' },
+        { modelId: 'models/gemini-3-flash', remainingFraction: 0.9, resetTime: '2027-01-01T00:00:00Z' },
+        { modelId: 'models/claude-sonnet', remainingFraction: 0.8, resetTime: '2027-01-02T00:00:00Z' },
+        { modelId: 'models/gpt-oss', remainingFraction: 0.7, resetTime: '2027-01-01T12:00:00Z' },
+        // Always-full autocomplete rows must not drive the summary bars.
+        { modelId: 'chat_20706', remainingFraction: 1, resetTime: '2027-01-01T00:00:00Z' },
+        { modelId: 'tab_flash_lite_preview', remainingFraction: 1, resetTime: '2027-01-01T00:00:00Z' }
+      ] });
+    }
     throw new Error(`unexpected URL ${url}`);
   };
 }
@@ -68,6 +80,122 @@ test('managed Antigravity limits skip disabled accounts', async () => {
   const account = createAntigravityManagedAccount('disabled').account;
   const providers = await fetchAntigravityManagedLimits([{ ...account, enabled: false }], { fetch: fakeFetch() });
   assert.deepEqual(providers, []);
+});
+
+test('loadCodeAssistEnrolled requires a real tier or project id', () => {
+  assert.equal(_loadCodeAssistEnrolled({ currentTier: { id: 'free-tier' } }), true);
+  assert.equal(_loadCodeAssistEnrolled({ cloudaicompanionProject: 'project-1' }), true);
+  assert.equal(_loadCodeAssistEnrolled({
+    allowedTiers: [{ id: 'standard-tier' }],
+    ineligibleTiers: [{ reasonCode: 'UNSUPPORTED_CLIENT' }]
+  }), false);
+  assert.equal(_loadCodeAssistEnrolled({}), false);
+});
+
+test('isNonAuthoritativeQuota rejects all-full stubs without enrollment', () => {
+  const stubBuckets = [
+    { modelId: 'gemini-2.5-flash', remainingFraction: 1, tokenType: 'REQUESTS' },
+    { modelId: 'gemini-2.5-pro', remainingFraction: 1, tokenType: 'REQUESTS' }
+  ];
+  assert.equal(_isNonAuthoritativeQuota({ load: {}, buckets: stubBuckets }), true);
+  assert.equal(_isNonAuthoritativeQuota({
+    load: { currentTier: { id: 'free-tier' } },
+    buckets: stubBuckets
+  }), false);
+  assert.equal(_isNonAuthoritativeQuota({
+    load: {},
+    buckets: [{ modelId: 'gemini-2.5-pro', remainingFraction: 0.1, tokenType: 'REQUESTS' }]
+  }), false);
+});
+
+test('managed agent model filter drops chat/tab autocomplete rows', () => {
+  assert.equal(_isManagedAgentModel('gemini-3.1-pro-high'), true);
+  assert.equal(_isManagedAgentModel('claude-sonnet-4-6'), true);
+  assert.equal(_isManagedAgentModel('chat_20706'), false);
+  assert.equal(_isManagedAgentModel('tab_flash_lite_preview'), false);
+});
+
+test('managed Antigravity limits send the Antigravity User-Agent to cloudcode-pa', async () => {
+  const account = createAntigravityManagedAccount('ua').account;
+  const seen = [];
+  await fetchAntigravityManagedLimits([account], {
+    fetch: fakeFetch({
+      onRequest(url, init) {
+        if (String(url).includes('cloudcode-pa') || String(url).includes('loadCodeAssist') || String(url).includes('retrieveUserQuota')) {
+          seen.push({ url: String(url), ua: init?.headers?.['user-agent'] || init?.headers?.['User-Agent'] });
+        }
+      }
+    }),
+    now: () => 0
+  });
+  assert.ok(seen.length >= 2);
+  assert.ok(seen.every((entry) => entry.ua === ANTIGRAVITY_USER_AGENT));
+});
+
+test('managed Antigravity limits treat post-migration all-100% OAuth stubs as unavailable', async () => {
+  const account = createAntigravityManagedAccount('stub').account;
+  const providers = await fetchAntigravityManagedLimits([account], {
+    fetch: fakeFetch({
+      load: {
+        allowedTiers: [{ id: 'standard-tier', name: 'Gemini Code Assist' }],
+        ineligibleTiers: [{
+          reasonCode: 'UNSUPPORTED_CLIENT',
+          reasonMessage: 'This client is no longer supported. Migrate to Antigravity.'
+        }]
+      },
+      quota: {
+        buckets: [
+          { modelId: 'gemini-2.5-flash', remainingFraction: 1, tokenType: 'REQUESTS', resetTime: '2026-08-05T00:00:00Z' },
+          { modelId: 'gemini-2.5-pro', remainingFraction: 1, tokenType: 'REQUESTS', resetTime: '2026-08-05T00:00:00Z' }
+        ]
+      }
+    }),
+    now: () => 0
+  });
+  assert.equal(providers.length, 1);
+  assert.equal(providers[0].status, 'unavailable');
+  assert.deepEqual(providers[0].windows, []);
+  assert.equal(providers[0].accountEmail, 'agy@example.com');
+});
+
+test('managed Antigravity limits still accept a real all-full enrolled quota', async () => {
+  const account = createAntigravityManagedAccount('full').account;
+  const providers = await fetchAntigravityManagedLimits([account], {
+    fetch: fakeFetch({
+      load: { cloudaicompanionProject: 'project-1', currentTier: { id: 'free-tier', name: 'Antigravity' } },
+      quota: {
+        buckets: [
+          { modelId: 'models/gemini-3-pro', remainingFraction: 1, resetTime: '2027-01-01T00:00:00Z' },
+          { modelId: 'models/claude-sonnet', remainingFraction: 1, resetTime: '2027-01-01T00:00:00Z' }
+        ]
+      }
+    }),
+    now: () => 0
+  });
+  assert.equal(providers[0].status, 'ok');
+  assert.deepEqual(providers[0].windows.map((window) => Math.round(window.usedPercent)), [0, 0]);
+});
+
+test('managed Antigravity limits report depleted agent pools instead of chat-row 100%', async () => {
+  const account = createAntigravityManagedAccount('depleted').account;
+  const providers = await fetchAntigravityManagedLimits([account], {
+    fetch: fakeFetch({
+      load: { cloudaicompanionProject: 'charismatic-memento-h219w', currentTier: { id: 'free-tier', name: 'Antigravity' } },
+      quota: {
+        buckets: [
+          { modelId: 'chat_20706', remainingFraction: 1, resetTime: '2026-08-05T00:00:00Z' },
+          { modelId: 'gemini-3.1-pro-high', remainingFraction: 0, resetTime: '2026-08-11T00:00:00Z' },
+          { modelId: 'claude-sonnet-4-6', remainingFraction: 0, resetTime: '2026-08-11T00:00:00Z' },
+          { modelId: 'tab_flash_lite_preview', remainingFraction: 1, resetTime: '2026-08-05T00:00:00Z' }
+        ]
+      }
+    }),
+    now: () => 0
+  });
+  assert.equal(providers[0].status, 'ok');
+  assert.deepEqual(providers[0].windows.map((window) => window.label), ['Gemini', 'Claude/GPT']);
+  assert.deepEqual(providers[0].windows.map((window) => Math.round(window.usedPercent)), [100, 100]);
+  assert.deepEqual(providers[0].windows.map((window) => Math.round(window.remainingPercent)), [0, 0]);
 });
 
 test('Antigravity OAuth flow validates state and returns the refresh token', async () => {

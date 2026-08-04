@@ -153,14 +153,14 @@
           </button>
           <div id="mainSettingsDetails" class="settings-section-details hidden">
             <div class="settings-subgroup settings-main-screen-group">
-              <div class="settings-note-row">
+              <div class="settings-note-row hidden">
                 <p class="settings-note" data-i18n="settings.views.note">Choose which main views appear and the order of the mode button.</p>
                 <div class="tool-header-actions">
                   <button id="resetViewDisplayOrderButton" class="tool-header-action" type="button" title="Reset order" aria-label="Reset order" data-i18n-title="settings.views.resetOrder" data-i18n-aria-label="settings.views.resetOrder"><span aria-hidden="true">↺</span></button>
                   <button id="showAllViewsButton" class="tool-header-action" type="button" title="Show all" aria-label="Show all" data-i18n-title="settings.views.showAll" data-i18n-aria-label="settings.views.showAll"><span class="tool-header-eye" aria-hidden="true"></span></button>
                 </div>
               </div>
-              <div id="viewDisplayList" class="tool-preference-list"></div>
+              <div id="viewDisplayList" class="tool-preference-list hidden"></div>
               <label class="settings-item"><span class="settings-item-text"><span class="settings-item-title" data-i18n="settings.currency.label">Currency</span></span>
                 <select id="currencyInput">
                   <option value="USD" data-i18n="settings.currency.usd">USD - US Dollar</option>
@@ -1247,14 +1247,14 @@
       </div>
 
       <section id="homePanel" class="home-panel hidden"></section>
-      <section id="breakdown" class="breakdown"></section>
+      <section id="breakdown" class="breakdown hidden"></section>
       <div id="session-detail-head" class="detail-head hidden"></div>
       <div id="session-detail" class="session-detail hidden"></div>
       <section id="serviceStatusPanel" class="service-status-panel hidden"></section>
-      <section id="limitsPanel" class="limits-panel hidden"></section>
+      <section id="limitsPanel" class="limits-panel"></section>
       <section id="trendsPanel" class="trends-panel hidden"></section>
       <footer class="footer">
-        <div id="viewSwitcher" class="view-switcher"></div>
+        <div id="viewSwitcher" class="view-switcher hidden"></div>
         <div id="appUpdatePill" class="update-pill hidden" title="">
           <button id="appUpdatePillAction" type="button" class="update-pill-action">
             <span id="appUpdatePillLabel" class="update-pill-label"></span>

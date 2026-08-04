@@ -242,9 +242,11 @@ const SMART_COLLECTION_INTERVAL_MS = 10 * 60 * 1000;
 const DEFAULT_COLLECTION_INTERVAL_MS = 5 * 60 * 1000;
 const HUB_DEFAULT_PORT = 17321;
 const KNOWN_CLIENT_LIST = KNOWN_CLIENTS.split(',').map((id) => ({ id }));
-const DEFAULT_VIEW_LIST = ['home', 'tool', 'status', 'device', 'model', 'project', 'session', 'limits', 'trends'].map((id) => ({ id }));
-const DEFAULT_HOME_MODULE_LIST = ['limits', 'tool', 'device', 'model', 'trends'].map((id) => ({ id }));
-const TRAY_OPEN_VIEW_IDS = new Set(['home', 'project', 'session', 'limits', 'trends', 'status']);
+// Limits-only product shell: other views remain in code for a later cleanup pass
+// but are not part of the allowlist or tray open surface.
+const DEFAULT_VIEW_LIST = ['limits'].map((id) => ({ id }));
+const DEFAULT_HOME_MODULE_LIST = ['limits'].map((id) => ({ id }));
+const TRAY_OPEN_VIEW_IDS = new Set(['limits']);
 
 let mainWindow = null;
 let dashboardWindow = null;
@@ -310,7 +312,7 @@ function defaultSettings() {
     floatingBubbleContent: 'icon',
     floatingBubbleCustomLayout: createDefaultTrayLayout(),
     floatingBubbleBounds: null,
-    lastViewState: { period: 'today', breakdown: 'tool' },
+    lastViewState: { period: 'today', breakdown: 'limits' },
     discordRpcEnabled: false,
     deviceId: process.env.TOKEN_MONITOR_DEVICE_ID || defaultDeviceId(),
     lastPostedDeviceId: '',

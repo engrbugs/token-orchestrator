@@ -40,10 +40,10 @@ function extractViewIds(source, constantName) {
   assert.fail(`Could not find ${constantName}`);
 }
 
-test('defaultViewDisplayPreferences hides the Status view by default', () => {
+test('defaultViewDisplayPreferences returns empty hiddenViews for limits-only shell', () => {
   assert.deepEqual(defaultViewDisplayPreferences(), {
     viewDisplayOrder: '',
-    hiddenViews: 'status'
+    hiddenViews: ''
   });
 });
 

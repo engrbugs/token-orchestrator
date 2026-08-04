@@ -24,7 +24,8 @@
   }
 
   function defaultViewDisplayPreferences() {
-    return { viewDisplayOrder: '', hiddenViews: 'status' };
+    // Limits-only product: no multi-view defaults (Status is no longer a view).
+    return { viewDisplayOrder: '', hiddenViews: '' };
   }
 
   function normalizeViewDisplayOrder(value, views) {
@@ -107,7 +108,7 @@
     return viewIds(views).filter((id) => !hidden.has(id) && !disabled.has(id)).length;
   }
 
-  function preferredViewId({ views, orderValue, hiddenValue, availableIds, currentId, preferFirst = false, fallback = 'tool' } = {}) {
+  function preferredViewId({ views, orderValue, hiddenValue, availableIds, currentId, preferFirst = false, fallback = 'limits' } = {}) {
     const order = visibleViewOrder({ views, orderValue, hiddenValue, availableIds });
     const current = normalizeId(currentId);
     if (!preferFirst && order.includes(current)) return current;

@@ -92,7 +92,9 @@ test('view preferences place compact actions beside the note without duplicate h
   const html = readRendererFile('index.html');
   const group = html.match(/<div class="settings-subgroup settings-main-screen-group">[\s\S]*?<div id="viewDisplayList"/)?.[0] || '';
   assert.match(html, /<div class="settings-group settings-collapsible-group settings-main-group"/);
-  assert.match(group, /<div class="settings-note-row">/);
+  // Limits-only shell keeps the markup but hides multi-view chrome.
+  assert.match(group, /<div class="settings-note-row(?:\s+hidden)?">/);
+  assert.match(html, /id="viewDisplayList"\s+class="tool-preference-list hidden"/);
   assert.match(group, /<p class="settings-note" data-i18n="settings\.views\.note">[\s\S]*?<div class="tool-header-actions">/);
   assert.match(group, /<div class="tool-header-actions">/);
   assert.match(group, /id="resetViewDisplayOrderButton"/);
