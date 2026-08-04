@@ -145,8 +145,8 @@ test('normalizePeriod accepts both spellings and defaults an older payload to ze
 });
 
 test('normalization caps timedOutputTokens at the output it claims to have timed', () => {
-  // The collector cannot break this — output is gated whole or not at all — but the hub and the
-  // Worker normalize whatever an agent posts, and this value divides straight into a headline
+  // The collector cannot break this — output is gated whole or not at all — but the hub
+  // normalizes whatever an agent posts, and this value divides straight into a headline
   // tok/s. Without the cap a single malformed record sets the fleet rate arbitrarily high.
   const capped = normalizePeriod({ outputTokens: 100, timedOutputTokens: 5_000, timedDurationMs: 1_000 });
   assert.equal(capped.timedOutputTokens, 100);

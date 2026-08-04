@@ -114,7 +114,7 @@ var translations = {
     "surfaces.discord.title": "Discord Rich Presence",
     "surfaces.discord.body": "Broadcast today's tokens, cost, and top tool to your profile. Opt-in.",
     "surfaces.ios.title": "iOS widget",
-    "surfaces.ios.body": "Today's totals on your Home Screen via the Worker hub, with Widgy or Scriptable.",
+    "surfaces.ios.body": "Today's totals on your Home Screen via a self-hosted hub, with Widgy or Scriptable.",
 
     "how.title": "Start with one widget. Add a hub for multi-device sync.",
     "how.lede": "Local stays the default path. Add self-hosted sync when you want token usage from multiple devices rolled into one view.",
@@ -131,11 +131,10 @@ var translations = {
     "how.node.agent": "Headless agent",
     "how.node.hub": "Self-hosted hub",
     "how.node.summaryStream": "Summary stream",
-    "how.backends": "Pick a sync backend; all three speak the same ingest protocol.",
+    "how.backends": "Pick a sync backend; both speak the same ingest protocol.",
     "how.backends.label": "Self-hostable sync backends",
     "how.backend.widget": "In-widget hub",
     "how.backend.node": "Node CLI hub",
-    "how.backend.worker": "Cloudflare Worker",
 
     "privacy.title": "Your code and conversations are not the product.",
     "privacy.body": "Token Orchestrator syncs only the fields needed to show totals, costs, tool and model breakdowns, and normalized account limit status.",
@@ -157,7 +156,6 @@ var translations = {
     "final.linux.body": "Portable x64 build",
 
     "footer.api": "API docs",
-    "footer.worker": "Worker docs",
     "footer.license": "License"
   },
 
@@ -272,7 +270,7 @@ var translations = {
     "surfaces.discord.title": "Discord Rich Presence",
     "surfaces.discord.body": "把今日 tokens、成本與最常用工具廣播到你的個人檔案，可選開啟。",
     "surfaces.ios.title": "iOS 小工具",
-    "surfaces.ios.body": "透過 Worker hub，用 Widgy 或 Scriptable 把今日總量放到主畫面。",
+    "surfaces.ios.body": "透過自架 hub，用 Widgy 或 Scriptable 把今日總量放到主畫面。",
 
     "how.title": "先用一個 widget。要同步多台裝置時才加 hub。",
     "how.lede": "本地仍是預設路徑。想彙整多台裝置的 Token 用量時，再加一層自架同步。",
@@ -289,11 +287,10 @@ var translations = {
     "how.node.agent": "Headless agent",
     "how.node.hub": "自架 hub",
     "how.node.summaryStream": "摘要串流",
-    "how.backends": "同步後端三選一，都走同一套 ingest 協定。",
+    "how.backends": "同步後端二選一，都走同一套 ingest 協定。",
     "how.backends.label": "可自架的同步後端",
     "how.backend.widget": "widget 內建 hub",
     "how.backend.node": "Node CLI hub",
-    "how.backend.worker": "Cloudflare Worker",
 
     "privacy.title": "你的程式碼與對話不是產品。",
     "privacy.body": "Token Orchestrator 只同步顯示總量、成本、工具與模型拆分，以及標準化帳戶限制所需的欄位。",
@@ -315,7 +312,6 @@ var translations = {
     "final.linux.body": "可攜式 x64 版本",
 
     "footer.api": "API 文件",
-    "footer.worker": "Worker 文件",
     "footer.license": "授權"
   },
 
@@ -430,7 +426,7 @@ var translations = {
     "surfaces.discord.title": "Discord Rich Presence",
     "surfaces.discord.body": "把今日 tokens、成本与最常用工具广播到你的个人资料，可选开启。",
     "surfaces.ios.title": "iOS 小组件",
-    "surfaces.ios.body": "通过 Worker hub，用 Widgy 或 Scriptable 把今日总量放到主屏幕。",
+    "surfaces.ios.body": "通过自托管 hub，用 Widgy 或 Scriptable 把今日总量放到主屏幕。",
 
     "how.title": "先用一个 widget。要同步多台设备时才加 hub。",
     "how.lede": "本地仍是默认路径。想汇总多台设备的 Token 用量时，再加一层自托管同步。",
@@ -447,11 +443,10 @@ var translations = {
     "how.node.agent": "Headless agent",
     "how.node.hub": "自托管 hub",
     "how.node.summaryStream": "摘要流",
-    "how.backends": "同步后端三选一，都走同一套 ingest 协定。",
+    "how.backends": "同步后端二选一，都走同一套 ingest 协定。",
     "how.backends.label": "可自托管的同步后端",
     "how.backend.widget": "widget 内置 hub",
     "how.backend.node": "Node CLI hub",
-    "how.backend.worker": "Cloudflare Worker",
 
     "privacy.title": "你的代码与对话不是产品。",
     "privacy.body": "Token Orchestrator 只同步显示总量、成本、工具与模型拆分，以及标准化账号限制所需的字段。",
@@ -473,7 +468,6 @@ var translations = {
     "final.linux.body": "便携式 x64 版本",
 
     "footer.api": "API 文档",
-    "footer.worker": "Worker 文档",
     "footer.license": "许可证"
   }
 };
