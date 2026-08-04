@@ -5,6 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { spawn } = require('node:child_process');
+const { installSafeStdin } = require('./safeStdio');
 
 function credentialsPath(home = os.homedir()) {
   return path.join(home, '.config', 'tokscale', 'cursor-credentials.json');
@@ -81,6 +82,7 @@ function runTokscaleSubcommand(args, { stdin = null, timeoutMs = 30000 } = {}) {
     const { tokscaleCommand } = require('./collector');
     const { bin, prefixArgs, env } = tokscaleCommand();
     const child = spawn(bin, [...prefixArgs, 'cursor', ...args], { env, windowsHide: true });
+    installSafeStdin(child);
     let stdout = '';
     let stderr = '';
     const timer = setTimeout(() => {

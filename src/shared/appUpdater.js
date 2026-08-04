@@ -227,9 +227,14 @@ async function checkLatestRelease(currentVersion) {
           'x-github-api-version': '2022-11-28'
         }
       });
+      // GitHub returns 404 when the repository has no published releases yet.
+      // Treat that as a valid empty channel so a fresh install does not show an
+      // alarming update failure until the first tagged release is published.
+      if (response.status === 404) return null;
       if (!response.ok) throw new Error(`GitHub responded ${response.status}`);
       return response.json();
     });
+    if (!payload) return { ok: true, newer: false, latest: null, error: null, checkedAt };
     const latest = parseLatestReleasePayload(payload);
     if (!latest) {
       return { ok: false, newer: false, latest: null, error: 'Release payload missing or invalid', checkedAt };

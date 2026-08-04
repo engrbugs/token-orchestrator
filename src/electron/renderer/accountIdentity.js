@@ -13,7 +13,14 @@
     const domain = email.slice(at + 1);
     const first = local[0] || '';
     const last = local.length > 1 ? local.at(-1) : '';
-    return `${first}***${last}@${domain}`;
+    const domainParts = domain.split('.');
+    const domainName = domainParts.shift() || '';
+    const domainFirst = domainName[0] || '';
+    const domainLast = domainName.length > 1 ? domainName.at(-1) : '';
+    const maskedDomain = domainName.length > 1
+      ? `${domainFirst}${'*'.repeat(Math.max(1, domainName.length - 2))}${domainLast}`
+      : domainName;
+    return `${first}***${last}@${[maskedDomain, ...domainParts].join('.')}`;
   }
 
   function accountEmailOf(account) {

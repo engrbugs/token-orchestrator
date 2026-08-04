@@ -15,9 +15,10 @@ const {
 } = require('../../src/electron/renderer/accountIdentity');
 
 test('Codex account email masking uses the final separator in quoted local parts', () => {
-  assert.equal(maskEmailAddress('primary.user@example.com'), 'p***r@example.com');
-  assert.equal(maskEmailAddress('ab@example.com'), 'a***b@example.com');
-  assert.equal(maskEmailAddress('"user@name"@example.com'), '"***"@example.com');
+  assert.equal(maskEmailAddress('primary.user@example.com'), 'p***r@e*****e.com');
+  assert.equal(maskEmailAddress('ab@example.com'), 'a***b@e*****e.com');
+  assert.equal(maskEmailAddress('"user@name"@example.com'), '"***"@e*****e.com');
+  assert.equal(maskEmailAddress('boss@abzdcorp.com'), 'b***s@a******p.com');
 });
 
 test('Codex account labels add workspace context only when identity labels collide', () => {
@@ -62,11 +63,11 @@ test('Codex account labels add workspace context only when identity labels colli
   ];
   assert.equal(
     codexAccountDisplayLabel(maskedCollision[0], maskedCollision, { maskEmail: true }),
-    'p***r@example.com · Personal'
+    'p***r@e*****e.com · Personal'
   );
   assert.equal(
     codexAccountDisplayLabel(maskedCollision[1], maskedCollision, { maskEmail: true }),
-    'p***r@example.com · Acme Team'
+    'p***r@e*****e.com · Acme Team'
   );
 
   assert.equal(

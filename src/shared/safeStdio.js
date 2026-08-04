@@ -23,4 +23,14 @@ function installSafeStdout() {
   }
 }
 
-module.exports = { installSafeStdout };
+function installSafeStdin(child) {
+  const stdin = child?.stdin;
+  if (!stdin || stdin._tokenMonitorEpipeHandled) return stdin;
+  stdin._tokenMonitorEpipeHandled = true;
+  stdin.on('error', (err) => {
+    if (!err || err.code !== 'EPIPE') throw err;
+  });
+  return stdin;
+}
+
+module.exports = { installSafeStdin, installSafeStdout };

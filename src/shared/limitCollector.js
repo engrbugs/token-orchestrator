@@ -1,6 +1,7 @@
 'use strict';
 
 const { spawn } = require('node:child_process');
+const { installSafeStdin } = require('./safeStdio');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -2682,6 +2683,7 @@ function codexCommandSourceDetail(command, platform = process.platform) {
 }
 
 function createJsonRpcClient(child, timeoutMs) {
+  installSafeStdin(child);
   let nextId = 1;
   let buffer = '';
   let closed = false;

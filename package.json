@@ -101,7 +101,7 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "Javis603",
+        "owner": "engrbugs",
         "repo": "token-orchestrator"
       }
     ]

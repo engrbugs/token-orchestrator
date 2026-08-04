@@ -1,6 +1,7 @@
 'use strict';
 
 const { spawn } = require('node:child_process');
+const { installSafeStdin } = require('./safeStdio');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -575,6 +576,7 @@ async function maybeSyncAntigravity(clientsCsv, logger, home = os.homedir(), opt
   const { bin, prefixArgs, env } = tokscaleCommand();
   await new Promise((resolve) => {
     const child = spawn(bin, [...prefixArgs, 'antigravity', 'sync'], { env, windowsHide: true });
+    installSafeStdin(child);
     let stderr = '';
     const timer = setTimeout(() => { child.kill('SIGTERM'); resolve(); }, 30000);
     child.stderr.on('data', (chunk) => { stderr += chunk.toString(); });

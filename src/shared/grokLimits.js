@@ -14,6 +14,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
+const { installSafeStdin } = require('./safeStdio');
 const { normalizeLimitProvider } = require('./limits');
 const { hashKey } = require('./hashKey');
 const { createOutboundFetch } = require('./outboundFetch');
@@ -506,6 +507,7 @@ async function fetchGrokRpcBilling(options = {}, deps = {}) {
         env,
         stdio: ['pipe', 'pipe', 'pipe']
       });
+      installSafeStdin(child);
     } catch (error) {
       finish(error);
       return;

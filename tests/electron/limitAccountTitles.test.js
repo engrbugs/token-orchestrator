@@ -84,9 +84,9 @@ function titleContext(maskLimitAccountEmails) {
 test('account email masking is applied by the shared limits title resolver', () => {
   const app = readRendererFile('app.js');
 
-  assert.equal(maskEmailAddress('primary.user@example.com'), 'p***r@example.com');
-  assert.equal(maskEmailAddress('secondary.user@example.com'), 's***r@example.com');
-  assert.equal(maskEmailAddress('ab@example.com'), 'a***b@example.com');
+  assert.equal(maskEmailAddress('primary.user@example.com'), 'p***r@e*****e.com');
+  assert.equal(maskEmailAddress('secondary.user@example.com'), 's***r@e*****e.com');
+  assert.equal(maskEmailAddress('ab@example.com'), 'a***b@e*****e.com');
 
   assert.equal(
     runTitle(
@@ -102,7 +102,7 @@ test('account email masking is applied by the shared limits title resolver', () 
       "limitAccountTitle('claude', { accountEmail: 'primary.user@example.com' }, 0)",
       titleContext(true)
     ),
-    'p***r@example.com'
+    'p***r@e*****e.com'
   );
   assert.equal(
     runTitle(
@@ -110,7 +110,7 @@ test('account email masking is applied by the shared limits title resolver', () 
       "limitAccountTitle('codex', { accountEmail: 'primary.user@example.com' }, 0)",
       titleContext(true)
     ),
-    'p***r@example.com'
+    'p***r@e*****e.com'
   );
   assert.equal(
     runTitle(
@@ -118,7 +118,7 @@ test('account email masking is applied by the shared limits title resolver', () 
       "limitAccountTitle('future-provider', { accountEmail: 'secondary.user@example.com' }, 0)",
       titleContext(true)
     ),
-    's***r@example.com'
+    's***r@e*****e.com'
   );
 });
 
@@ -210,7 +210,7 @@ test('accounts sharing a visible email are disambiguated', () => {
     { accountEmail: 'javis@example.com', accountName: 'Personal' },
     { accountEmail: 'jonas@example.com' }
   ];
-  assert.deepEqual(titlesFor(named, true), ['j***s@example.com · Personal', 'j***s@example.com']);
+  assert.deepEqual(titlesFor(named, true), ['j***s@e*****e.com · Personal', 'j***s@e*****e.com']);
   // Unmasked those addresses already differ, so no suffix is added.
   assert.deepEqual(titlesFor(named, false), ['javis@example.com', 'jonas@example.com']);
 
@@ -221,8 +221,8 @@ test('accounts sharing a visible email are disambiguated', () => {
     { accountEmail: 'jonas@example.com', accountName: 'Acme', accountKey: 'sha256:abcdef654321' }
   ];
   assert.deepEqual(titlesFor(sameOrg, true), [
-    'j***s@example.com · Acme · #abcdef1',
-    'j***s@example.com · Acme · #abcdef6'
+    'j***s@e*****e.com · Acme · #abcdef1',
+    'j***s@e*****e.com · Acme · #abcdef6'
   ]);
 
   // A CLI-sourced key embeds the address, so the fingerprint hashes it instead of
@@ -234,7 +234,7 @@ test('accounts sharing a visible email are disambiguated', () => {
   const cliTitles = titlesFor(cliKeyed, true);
   assert.notEqual(cliTitles[0], cliTitles[1]);
   for (const title of cliTitles) {
-    assert.match(title, /^j\*\*\*s@example\.com · Acme · #[0-9a-f]{6}$/);
+    assert.match(title, /^j\*\*\*s@e\*+e\.com · Acme · #[0-9a-f]{6}$/);
   }
 
   // Fingerprints follow the account, so reordering providers cannot swap suffixes.
@@ -247,8 +247,8 @@ test('accounts sharing a visible email are disambiguated', () => {
     { accountEmail: 'jonas@example.com', accountName: 'Acme' }
   ];
   assert.deepEqual(titlesFor(keyless, true), [
-    'j***s@example.com · Acme · #1',
-    'j***s@example.com · Acme · #2'
+    'j***s@e*****e.com · Acme · #1',
+    'j***s@e*****e.com · Acme · #2'
   ]);
 
   // A key that cannot separate the rows is no better than no key at all.
@@ -257,8 +257,8 @@ test('accounts sharing a visible email are disambiguated', () => {
     { accountEmail: 'jonas@example.com', accountName: 'Acme', accountKey: 'sha256:abcdef123456' }
   ];
   assert.deepEqual(titlesFor(sharedKey, true), [
-    'j***s@example.com · Acme · #1',
-    'j***s@example.com · Acme · #2'
+    'j***s@e*****e.com · Acme · #1',
+    'j***s@e*****e.com · Acme · #2'
   ]);
 });
 
@@ -274,7 +274,7 @@ test('accountEmailLabel keeps duplicate addresses apart regardless of masking', 
   );
   assert.equal(
     accountEmailLabel(peers[1], peers, { maskEmail: true, suffix: 'Acme Team' }),
-    'm***r@example.com · Acme Team'
+    'm***r@e*****e.com · Acme Team'
   );
   assert.equal(accountEmailLabel({ accountName: 'No email' }, peers, { maskEmail: true }), '');
   // Codex builds its workspace-aware label on the same primitive.

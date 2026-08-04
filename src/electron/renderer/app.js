@@ -1851,7 +1851,8 @@ function deviceRowsForPeriod() {
 }
 
 function toolRowsForPeriod(period) {
-  const clientRows = Object.entries(period?.clients || {}).filter(([, value]) => Number(value) > 0).map(([client, value]) => ({ key: client, name: clientLabels[client] || client, value: Number(value), cost: Number(period?.clientCosts?.[client] || 0), color: clientColors[client] || clientColors.default, stale: false, cacheReadTokens: Number(period?.clientCacheReads?.[client] || 0), cacheWriteTokens: Number(period?.clientCacheWrites?.[client] || 0), outputTokens: Number(period?.clientOutputs?.[client] || 0) }));
+  const enabled = enabledClientSet();
+  const clientRows = Object.entries(period?.clients || {}).filter(([client, value]) => enabled.has(client) && Number(value) > 0).map(([client, value]) => ({ key: client, name: clientLabels[client] || client, value: Number(value), cost: Number(period?.clientCosts?.[client] || 0), color: clientColors[client] || clientColors.default, stale: false, cacheReadTokens: Number(period?.clientCacheReads?.[client] || 0), cacheWriteTokens: Number(period?.clientCacheWrites?.[client] || 0), outputTokens: Number(period?.clientOutputs?.[client] || 0) }));
   if (clientRows.length > 0) {
     const usageSortedRows = clientRows.sort((a, b) => b.value - a.value);
     return clientDisplayPreferencesApi.applyClientDisplayPreferences(usageSortedRows, state.settings?.clientDisplayOrder, state.settings?.hiddenClients, KNOWN_CLIENTS, state.settings?.pinnedClients);
@@ -4596,7 +4597,8 @@ function renderHomeModelModule(period) {
 }
 
 function homeToolSourceRows(period) {
-  return Object.entries(period?.clients || {}).map(([client, value]) => ({
+  const enabled = enabledClientSet();
+  return Object.entries(period?.clients || {}).filter(([client]) => enabled.has(client)).map(([client, value]) => ({
     key: client,
     name: clientLabels[client] || client,
     value: Number(value || 0),
