@@ -123,12 +123,18 @@
           })
           .slice(0, 2)
           .map(({ index: _index, ...window }) => window);
-        if (windows.length === 0) return null;
+        // Keep configured accounts visible even when their quota probe failed.
+        // Otherwise Settings can show two accounts while Home silently drops
+        // the one reporting unavailable/unauthorized.
+        const status = String(account.status || '').toLowerCase();
+        if (windows.length === 0 && (status === 'ok' || !status)) return null;
         return {
           key: account.key || String(index),
           providerId: account.providerId || '',
           name: account.name || '',
           color: account.color || '',
+          status: account.status || '',
+          statusLabel: account.statusLabel || '',
           lowestRemaining: Math.min(...windows.map((window) => window.remainingPercent ?? 100)),
           windows,
           index
@@ -222,7 +228,8 @@
     colors = {},
     limit = 3,
     sort = 'remaining',
-    accountName
+    accountName,
+    statusLabel
   } = {}) {
     const enabled = new Set((enabledProviderIds || []).map((id) => String(id || '').trim().toLowerCase()).filter(Boolean));
     const hidden = new Set((hiddenProviderIds || []).map((id) => String(id || '').trim().toLowerCase()).filter(Boolean));
@@ -238,6 +245,8 @@
           providerId: id,
           name: typeof accountName === 'function' ? accountName(provider, index, providerEntries) : label,
           color: colors[id] || colors.default || '',
+          status: provider.status || '',
+          statusLabel: typeof statusLabel === 'function' ? statusLabel(provider) : '',
           windows: provider.windows || [],
           balance: provider.balance || null
         });

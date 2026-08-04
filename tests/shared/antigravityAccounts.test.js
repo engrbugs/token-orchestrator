@@ -24,7 +24,12 @@ function fakeFetch(overrides = {}) {
   return async (url, init = {}) => {
     if (typeof overrides.onRequest === 'function') overrides.onRequest(url, init);
     if (url.includes('oauth2.googleapis.com')) return response({ access_token: `access-${init.body}` });
-    if (url.includes('userinfo')) return response({ email: 'agy@example.com' });
+    if (url.includes('userinfo')) {
+      const email = typeof overrides.userInfoEmail === 'function'
+        ? overrides.userInfoEmail(init)
+        : (overrides.userInfoEmail || 'agy@example.com');
+      return response({ email });
+    }
     if (url.includes('loadCodeAssist')) {
       return response(overrides.load || { cloudaicompanionProject: 'project-1', currentTier: { id: 'free-tier', name: 'Antigravity' } });
     }
@@ -61,12 +66,28 @@ test('managed Antigravity account metadata keeps disabled accounts visible', () 
 test('managed Antigravity limits fetch one provider per enabled account', async () => {
   const one = createAntigravityManagedAccount('one').account;
   const two = createAntigravityManagedAccount('two').account;
-  const providers = await fetchAntigravityManagedLimits([one, two], { fetch: fakeFetch(), now: () => 0 });
+  const providers = await fetchAntigravityManagedLimits([one, two], {
+    fetch: fakeFetch({
+      userInfoEmail: (init) => String(init?.headers?.authorization || '').includes('refresh_token=one')
+        ? 'one@example.com'
+        : 'two@example.com'
+    }),
+    now: () => 0
+  });
   assert.equal(providers.length, 2);
-  assert.deepEqual(providers.map((provider) => provider.accountEmail), ['agy@example.com', 'agy@example.com']);
+  assert.deepEqual(providers.map((provider) => provider.accountEmail), ['one@example.com', 'two@example.com']);
+  assert.deepEqual(providers.map((provider) => provider.accountKey), [one.accountKey, two.accountKey]);
   assert.deepEqual(providers[0].windows.map((window) => window.label), ['Gemini', 'Claude/GPT']);
   assert.deepEqual(providers[0].windows.map((window) => Math.round(window.usedPercent)), [25, 30]);
   assert.equal(providers[0].sourceDetail, 'managed');
+});
+
+test('managed Antigravity limits collapse duplicate grants for one email', async () => {
+  const one = createAntigravityManagedAccount('one-grant').account;
+  const two = createAntigravityManagedAccount('two-grant').account;
+  const providers = await fetchAntigravityManagedLimits([one, two], { fetch: fakeFetch(), now: () => 0 });
+  assert.equal(providers.length, 1);
+  assert.equal(providers[0].accountEmail, 'agy@example.com');
 });
 
 test('managed Antigravity limits preserve per-account failure status', async () => {
@@ -76,6 +97,16 @@ test('managed Antigravity limits preserve per-account failure status', async () 
   });
   assert.equal(providers[0].status, 'unauthorized');
   assert.equal(providers[0].accountKey, account.accountKey);
+});
+
+test('managed Antigravity limits keep an account with no refresh token visible as unavailable', async () => {
+  const account = createAntigravityManagedAccount('missing-token').account;
+  const providers = await fetchAntigravityManagedLimits([{ ...account, refreshToken: '' }], { fetch: fakeFetch() });
+  assert.equal(providers.length, 1);
+  assert.equal(providers[0].status, 'unavailable');
+  assert.equal(providers[0].accountKey, account.accountKey);
+  assert.equal(providers[0].accountLabel, account.accountLabel || 'Antigravity');
+  assert.deepEqual(providers[0].windows, []);
 });
 
 test('managed Antigravity limits skip disabled accounts', async () => {

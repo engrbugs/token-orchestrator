@@ -330,6 +330,11 @@ async function startAntigravityOAuthFlow(options = {}, deps = {}) {
 }
 
 async function fetchAccountQuota(account, deps = {}) {
+  if (!cleanText(account?.refreshToken, 4096)) {
+    const error = new Error('Antigravity account has no refresh token');
+    error.status = 'unavailable';
+    throw error;
+  }
   const tokens = await (deps.refreshAccessToken || refreshAccessToken)(account.refreshToken, deps);
   const accessToken = tokens.access_token;
   const userInfoHeaders = { authorization: `Bearer ${accessToken}` };
@@ -338,7 +343,10 @@ async function fetchAccountQuota(account, deps = {}) {
   const email = cleanText(userInfo.email || account.accountEmail, 254);
   const providerBase = {
     provider: 'antigravity',
-    accountKey: accountKey(email, account.refreshToken),
+    // Keep the persisted managed-account identity stable. Rebuilding this key
+    // from the profile email can collapse two configured entries when Google
+    // returns the same or an incomplete profile identity for both grants.
+    accountKey: account.accountKey || accountKey(email, account.refreshToken),
     accountLabel: email || account.accountLabel || 'Antigravity',
     accountEmail: email,
     source: 'api',
@@ -422,9 +430,9 @@ async function fetchAccountQuota(account, deps = {}) {
 
 async function fetchAntigravityManagedLimits(accounts, deps = {}) {
   const normalized = normalizeAntigravityManagedAccounts(accounts)
-    .filter((account) => account.enabled !== false && account.refreshToken);
+    .filter((account) => account.enabled !== false);
   if (!normalized.length) return [];
-  return Promise.all(normalized.map(async (account) => {
+  const providers = await Promise.all(normalized.map(async (account) => {
     try {
       return await fetchAccountQuota(account, deps);
     } catch (error) {
@@ -441,6 +449,19 @@ async function fetchAntigravityManagedLimits(accounts, deps = {}) {
       });
     }
   }));
+  // A Google email is the user identity, while refresh tokens are grants. A
+  // second grant for the same email must not render as a second Antigravity
+  // account; prefer a live quota result over an unavailable duplicate.
+  const byIdentity = new Map();
+  for (const provider of providers) {
+    const email = cleanText(provider.accountEmail, 254).toLowerCase();
+    const identity = email ? `email:${email}` : `key:${provider.accountKey || provider.accountLabel}`;
+    const existing = byIdentity.get(identity);
+    if (!existing || (existing.status !== 'ok' && provider.status === 'ok')) {
+      byIdentity.set(identity, provider);
+    }
+  }
+  return [...byIdentity.values()];
 }
 
 module.exports = {

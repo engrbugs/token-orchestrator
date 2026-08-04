@@ -176,6 +176,24 @@ test('homeLimitAccounts keeps account windows together and sorts lowest remainin
   assert.equal(rows[1].lowestRemaining, 70);
 });
 
+test('Home keeps unavailable managed accounts visible without quota windows', () => {
+  const rows = homeLimitAccountsForProviders({
+    providers: [
+      { provider: 'antigravity', accountKey: 'agy-one', accountEmail: 'one@example.com', status: 'ok', windows: [{ kind: 'weekly', remainingPercent: 50 }] },
+      { provider: 'antigravity', accountKey: 'agy-two', accountEmail: 'two@example.com', status: 'unavailable', windows: [] }
+    ],
+    providerOptions: [{ id: 'antigravity', label: 'Antigravity' }],
+    enabledProviderIds: ['antigravity'],
+    statusLabel: (provider) => provider.status === 'unavailable' ? 'Unavailable' : 'Live',
+    limit: 3
+  });
+
+  assert.equal(rows.length, 2);
+  assert.equal(rows[1].status, 'unavailable');
+  assert.equal(rows[1].statusLabel, 'Unavailable');
+  assert.deepEqual(rows[1].windows, []);
+});
+
 test('homeLimitAccounts keeps a real billing remaining percentage fallback', () => {
   const rows = homeLimitAccounts([
     {

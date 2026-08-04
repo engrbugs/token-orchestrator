@@ -4477,7 +4477,8 @@ function homeLimitRows() {
           : accountTitle;
       }
       return providerTitle;
-    }
+    },
+    statusLabel: (provider) => limitStatusLabel(provider?.status)
   });
 }
 
@@ -4521,6 +4522,21 @@ function renderHomeLimitModule() {
     account.append(mark, name);
     const windows = document.createElement('div');
     windows.className = 'home-limit-windows';
+    if (row.windows.length === 0 && row.statusLabel) {
+      const metric = document.createElement('div');
+      metric.className = 'home-limit-window';
+      const line = document.createElement('div');
+      line.className = 'home-limit-window-line';
+      const label = document.createElement('span');
+      label.className = 'home-limit-window-label';
+      label.textContent = 'Status';
+      const value = document.createElement('span');
+      value.className = 'home-list-value';
+      value.textContent = row.statusLabel;
+      line.append(label, value);
+      metric.append(line);
+      windows.append(metric);
+    }
     for (const window of row.windows) {
       const metric = document.createElement('div');
       metric.className = 'home-limit-window';
