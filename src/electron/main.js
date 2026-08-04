@@ -280,11 +280,12 @@ function normalizeHomeLimitAccountCount(value) {
 }
 
 function defaultSettings() {
-  const envHubUrl = process.env.TOKEN_MONITOR_HUB_URL || '';
   const windowBehavior = process.env.TOKEN_MONITOR_ALWAYS_ON_TOP === '0' ? 'normal' : 'floating';
   return {
-    hubMode: envHubUrl ? 'client' : 'local',
-    hubUrl: envHubUrl,
+    // The desktop widget is local-only. Keep the legacy fields in the stored
+    // settings shape so older settings files can still be read safely.
+    hubMode: 'local',
+    hubUrl: '',
     hubHostPort: Math.max(1, Math.min(65535, Number(process.env.TOKEN_MONITOR_PORT) || HUB_DEFAULT_PORT)),
     // Default to TOKEN_MONITOR_SECRET so agents that already trust this env
     // value (matching what the CLI hub uses) can connect to the widget's
@@ -330,9 +331,9 @@ function defaultSettings() {
     showHomeLimitBars: false,
     showHomeLimitProviderNames: false,
     projectsEnabled: parseBoolean(process.env.TOKEN_MONITOR_PROJECTS_ENABLED, false),
-    historyEnabled: true,
+    historyEnabled: false,
     historyIntervalMs: normalizeHistoryIntervalMs(process.env.TOKEN_MONITOR_HISTORY_INTERVAL_MS),
-    sessionUsageArchiveEnabled: parseBoolean(process.env.TOKEN_MONITOR_SESSION_USAGE_ARCHIVE_ENABLED, true),
+    sessionUsageArchiveEnabled: false,
     wslScanEnabled: parseBoolean(process.env.TOKEN_MONITOR_WSL_SCAN, true),
     exportAutoEnabled: false,
     exportDir: '',
@@ -2126,6 +2127,12 @@ function readSettings() {
     const storedCredentials = loadCredentialSettings(saved);
     if (!saved.secret && defaults.secret) delete saved.secret;
     const merged = { ...defaults, ...saved, ...storedCredentials };
+    // History/trends and desktop multi-device sync were retired. Preserve the
+    // old keys for settings-file compatibility, but never reactivate them.
+    merged.hubMode = 'local';
+    merged.hubUrl = '';
+    merged.historyEnabled = false;
+    merged.sessionUsageArchiveEnabled = false;
     // Migrate older configs that predate hubMode: infer from hubUrl.
     if (saved.hubMode === undefined) {
       merged.hubMode = (saved.hubUrl && String(saved.hubUrl).trim()) ? 'client' : 'local';
@@ -4511,6 +4518,12 @@ app.whenReady().then(() => {
     const normalizedCurrency = patch.currency !== undefined ? normalizeCurrency(patch.currency, settings.currency) : normalizeCurrency(settings.currency);
     const normalizedPatch = { ...patch, currency: normalizedCurrency };
     delete normalizedPatch.windowMaximized;
+    // Retired desktop features remain readable for migration, but cannot be
+    // re-enabled by an old renderer or a stale settings update payload.
+    delete normalizedPatch.hubMode;
+    delete normalizedPatch.hubUrl;
+    delete normalizedPatch.historyEnabled;
+    delete normalizedPatch.sessionUsageArchiveEnabled;
     delete normalizedPatch.codexManagedAccounts;
     delete normalizedPatch.mimoManagedAccounts;
     delete normalizedPatch.openrouterProfiles;
@@ -4543,7 +4556,8 @@ app.whenReady().then(() => {
     settings = normalizeWindowBehaviorSettings({
       ...settings,
       ...normalizedPatch,
-      hubMode: patch.hubMode !== undefined ? normalizeHubMode(patch.hubMode, settings.hubMode) : settings.hubMode,
+      hubMode: 'local',
+      hubUrl: '',
       hubHostPort: patch.hubHostPort !== undefined ? normalizeHubPort(patch.hubHostPort, settings.hubHostPort) : settings.hubHostPort,
       hubHostSecret: patch.hubHostSecret !== undefined ? String(patch.hubHostSecret) : settings.hubHostSecret,
       deviceId: (patch.deviceId !== undefined ? String(patch.deviceId).trim() : settings.deviceId) || defaultDeviceId(),
@@ -4577,10 +4591,10 @@ app.whenReady().then(() => {
       homeLimitProviderOrder: patch.homeLimitProviderOrder !== undefined ? migrateHomeLimitProviderOrder(patch.homeLimitProviderOrder) : (settings.homeLimitProviderOrder || ''),
       hiddenHomeLimitProviders: patch.hiddenHomeLimitProviders !== undefined ? normalizeHiddenLimitProviders(patch.hiddenHomeLimitProviders) : normalizeHiddenLimitProviders(settings.hiddenHomeLimitProviders),
       homeLimitAccountCount: normalizeHomeLimitAccountCount(patch.homeLimitAccountCount ?? settings.homeLimitAccountCount),
-      historyEnabled: parseBoolean(patch.historyEnabled ?? settings.historyEnabled, false),
+      historyEnabled: false,
       projectsEnabled: parseBoolean(patch.projectsEnabled ?? settings.projectsEnabled, true),
       historyIntervalMs: normalizeHistoryIntervalMs(patch.historyIntervalMs ?? settings.historyIntervalMs),
-      sessionUsageArchiveEnabled: parseBoolean(patch.sessionUsageArchiveEnabled ?? settings.sessionUsageArchiveEnabled, true),
+      sessionUsageArchiveEnabled: false,
       wslScanEnabled: parseBoolean(patch.wslScanEnabled ?? settings.wslScanEnabled, true),
       collectionMode: normalizeCollectionMode(patch.collectionMode ?? settings.collectionMode),
       collectionIntervalMs: normalizeCollectionIntervalMs(patch.collectionIntervalMs ?? settings.collectionIntervalMs),
@@ -4632,6 +4646,10 @@ app.whenReady().then(() => {
         ? normalizeCustomPricingSetting(patch.customModelPricing)
         : normalizeCustomPricingSetting(settings.customModelPricing)
     }, normalizedPatch);
+    settings.hubMode = 'local';
+    settings.hubUrl = '';
+    settings.historyEnabled = false;
+    settings.sessionUsageArchiveEnabled = false;
     settings.archivedClientUsage = normalizeArchivedClientUsage(settings.archivedClientUsage);
     if (settings.clients !== previousClients) updateArchivedClientUsage(previousClients, settings.clients);
     delete settings.edgeDrawerEnabled;

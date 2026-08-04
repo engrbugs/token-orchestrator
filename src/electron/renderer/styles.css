@@ -539,6 +539,8 @@ body.is-windows.floating-bubble-collapsed-right .floating-bubble-tab {
   grid-template-columns: minmax(0, 1fr);
 }
 .session-archive-settings { display: grid; gap: 6px; }
+.session-archive-settings,
+.settings-sync-group { display: none !important; }
 .session-archive-settings .session-archive-toggle { color: var(--text); }
 .session-archive-footer {
   display: flex;
