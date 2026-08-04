@@ -43,7 +43,7 @@ There is no system-tray icon or tray-only mode. The widget remains a normal wind
 The agent and hub have no UI. Configure them with a `.env` file in the project root (copy it from `.env.example`):
 
 ```env
-TOKEN_MONITOR_HUB_URL=               # required in sync mode — Worker URL or http://<lan-ip>:17321
+TOKEN_MONITOR_HUB_URL=               # required in sync mode — http://<lan-ip>:17321
 TOKEN_MONITOR_SECRET=                # shared secret; must match the hub
 TOKEN_MONITOR_DEVICE_ID=             # optional — defaults to the hostname
 TOKEN_MONITOR_SYNC_UPLOAD_INTERVAL_MS= # optional — 0/live, 600000/10min, 1200000/20min, 1800000/30min

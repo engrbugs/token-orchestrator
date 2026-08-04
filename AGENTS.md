@@ -25,7 +25,6 @@ Three runtime entry points share a single `src/shared/` library:
 - **`src/electron/main.js`** — widget process. Owns the BrowserWindow, IPC, and chooses between *local* and *sync* mode based on whether `settings.hubUrl` is set.
 - **`src/hub/server.js`** — Node HTTP hub. Stores device records in `data/devices.json`, exposes `/api/ingest`, `/api/stats`, `/api/stats/stream` (SSE).
 - **`src/agent/agent.js`** — headless collector for machines without a widget. Same data path as the widget's sync-mode collector.
-- **`worker/src/index.js`** — Cloudflare Worker hub that speaks the same protocol; the aggregation rules must stay portable (no Node built-ins in `usage.js`). The "Deploy to Cloudflare" button isolates `worker/` into a fresh repo, so the Worker may **not** import files above its own dir — its shared closure (`limits.js` / `usage.js` / `history.js` / `projectKey.js`) is vendored into `worker/src/shared/` by `npm run sync:worker` (`scripts/sync-worker-shared.js`). `src/shared/` stays the single source of truth; those copies are `@generated` (a CommonJS `package.json` marker scopes them back to CJS inside the ESM worker) and CI fails on drift. Edit `src/shared/`, never the copies, then re-run the sync.
 
 ### Collector pipeline (shared by widget and agent)
 
@@ -40,7 +39,7 @@ Three runtime entry points share a single `src/shared/` library:
 
 Usage and limits have independent lifecycles under `src/shared/deviceRuntime.js`: `UsageRuntime` owns the tokscale collector, while `LimitsRuntime` owns its refresh timer, bounded cross-provider concurrency, per-provider latest-wins serial lanes, scoped account refreshes, finite probe deadlines, retry/backoff, and `lastGood` / `lastAttempt` retention. Credential changes refresh or clear only the affected limits lane and never restart usage; Cursor additionally forces one targeted usage sync because its tokscale cache is self-synced.
 
-`DeviceState` composes both outputs into the unchanged device wire record, buffering limits until usage exists and cold-start previews until a complete usage baseline exists; limits-only updates preserve the usage `updatedAt`. Provider dispatch starts in `src/shared/limitCollector.js`, with provider-specific implementations split between that file and `src/shared/*Limits.js`; shared normalization remains in `src/shared/limits.js`. The hub and Worker receive the composed record and never need provider credentials.
+`DeviceState` composes both outputs into the unchanged device wire record, buffering limits until usage exists and cold-start previews until a complete usage baseline exists; limits-only updates preserve the usage `updatedAt`. Provider dispatch starts in `src/shared/limitCollector.js`, with provider-specific implementations split between that file and `src/shared/*Limits.js`; shared normalization remains in `src/shared/limits.js`. The hub receives the composed record and never needs provider credentials.
 
 Balance-style quotas are marked with `windows[].metric === 'credits'`: their headline value is money (`remaining` + `currency`), not a percentage. `src/shared/limitBalanceDisplay.js` is the single formatting/derivation entry point shared by Home, the tray and the limits page — key off that marker, never a provider whitelist. The meter percentage for a top-up balance (`amount / (amount + monthSpend)`) is a **display-layer derivation** and is deliberately kept out of the wire shape; don't push it back into a collector.
 
@@ -86,7 +85,7 @@ One caveat on top of the table:
 
 ### Data flow contract
 
-The hub stores normalized device records (`normalizeDeviceRecord` in `usage.js`) and aggregates on read (`aggregateDevices`). The wire shape between agent/widget and hub is whatever `collectUsageOnce()` returns — that function is the source of truth, and `docs/API.md` documents the full contract. The core is `{deviceId, hostname, platform, updatedAt, agentVersion, today, month, allTime}` (each period has `{totalTokens, costUsd, clients, clientCosts, models, modelCosts}`), plus attribution fields (`trackedClients`, `clientStatus`, `wslStatus`, `periodWindows`, `projectsEnabled`) and optional `osName` / `osVersion` / `agentRuntime` / `history` / `limits`. The Worker hub uses the exact same shapes.
+The hub stores normalized device records (`normalizeDeviceRecord` in `usage.js`) and aggregates on read (`aggregateDevices`). The wire shape between agent/widget and hub is whatever `collectUsageOnce()` returns — that function is the source of truth, and `docs/API.md` documents the full contract. The core is `{deviceId, hostname, platform, updatedAt, agentVersion, today, month, allTime}` (each period has `{totalTokens, costUsd, clients, clientCosts, models, modelCosts}`), plus attribution fields (`trackedClients`, `clientStatus`, `wslStatus`, `periodWindows`, `projectsEnabled`) and optional `osName` / `osVersion` / `agentRuntime` / `history` / `limits`.
 
 ### Stale devices
 
