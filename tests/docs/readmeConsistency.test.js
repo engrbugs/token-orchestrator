@@ -8,17 +8,11 @@ const test = require('node:test');
 const rootDir = path.join(__dirname, '..', '..');
 const read = (file) => fs.readFileSync(path.join(rootDir, file), 'utf8');
 
-test('configuration reference env keys all exist in .env.example', () => {
-  const envKeys = (text) => {
-    const block = text.match(/```env\n([\s\S]*?)```/)?.[1] || '';
-    return [...block.matchAll(/^(TOKEN_MONITOR_[A-Z0-9_]+)=/gm)].map((match) => match[1]);
-  };
-  const docKeys = envKeys(read('docs/configuration.md'));
-  assert.ok(docKeys.length > 0, 'docs/configuration.md should list env keys');
-  const exampleKeys = new Set(
-    [...read('.env.example').matchAll(/^(TOKEN_MONITOR_[A-Z0-9_]+)=/gm)].map((match) => match[1])
-  );
-  for (const key of docKeys) assert.ok(exampleKeys.has(key), `${key} missing from .env.example`);
+test('README points at .env.example for configuration', () => {
+  const readme = read('README.md');
+  assert.match(readme, /\.env\.example/);
+  assert.doesNotMatch(readme, /docs\/configuration\.md/);
+  assert.doesNotMatch(readme, /docs\/API\.md/);
 });
 
 test('README describes the current desktop surface', () => {
@@ -26,13 +20,25 @@ test('README describes the current desktop surface', () => {
   assert.match(readme, /AI Tool Limits/);
   assert.match(readme, /Codex and Antigravity accounts/);
   assert.match(readme, /no system-tray icon/);
-  assert.match(readme, /minimize and close/);
-  assert.match(readme, /docs\/configuration\.md/);
+  assert.match(readme, /minimize and close|local-only/i);
 });
 
-test('configuration keeps provider accounts inside AI Tool Limits', () => {
-  const configuration = read('docs/configuration.md');
-  assert.match(configuration, /\| \*\*AI Tool Limits\*\* \|[^|]*(?:credentials|multiple accounts)[^|]*\|/);
-  assert.doesNotMatch(configuration, /\| \*\*Accounts\*\* \|/);
-  assert.match(configuration, /no system-tray icon/i);
+test('README keeps provider accounts inside AI Tool Limits and has no tray mode', () => {
+  const readme = read('README.md');
+  assert.match(readme, /AI Tool Limits/);
+  assert.match(readme, /no system-tray icon/i);
+  assert.doesNotMatch(readme, /tray-only mode/i);
+});
+
+test('kept product docs still exist', () => {
+  for (const file of [
+    'docs/privacy.md',
+    'docs/code-signing.md',
+    'docs/export.md',
+    'docs/github-copilot-otel.md'
+  ]) {
+    assert.ok(fs.existsSync(path.join(rootDir, file)), file);
+  }
+  assert.ok(!fs.existsSync(path.join(rootDir, 'docs/API.md')), 'docs/API.md should be removed');
+  assert.ok(!fs.existsSync(path.join(rootDir, 'docs/configuration.md')), 'docs/configuration.md should be removed');
 });

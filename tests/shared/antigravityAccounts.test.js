@@ -3,6 +3,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
+process.env.ANTIGRAVITY_GOOGLE_CLIENT_ID ||= 'test-antigravity-client-id';
+process.env.ANTIGRAVITY_GOOGLE_CLIENT_SECRET ||= 'test-antigravity-client-secret';
 const {
   ANTIGRAVITY_USER_AGENT,
   createAntigravityManagedAccount,

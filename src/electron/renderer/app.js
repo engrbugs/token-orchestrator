@@ -255,7 +255,6 @@ const SERVICE_PROVIDER_OPTIONS = SERVICE_STATUS_PLACEHOLDERS.map((entry) => ({ i
 const TOKEN_MONITOR_REPOSITORY_URL = 'https://github.com/engrbugs/token-orchestrator';
 const TOKEN_MONITOR_ISSUES_URL = `${TOKEN_MONITOR_REPOSITORY_URL}/issues/new/choose`;
 const TOKEN_MONITOR_WEBSITE_URL = 'https://github.com/engrbugs/token-orchestrator/';
-const TOKEN_MONITOR_WSL_SQLITE_GUIDE_URL = `${TOKEN_MONITOR_REPOSITORY_URL}/blob/main/docs/wsl-sqlite-setup.md`;
 const serviceStatusProviderPreferencesApi = window.TokenMonitorServiceStatusProviderPreferences;
 const SETTINGS_SECTION_IDS = ['general', 'window', 'appearance', 'tools', 'limits', 'sync'];
 const REFRESH_BUTTON_FEEDBACK_MS = 700;
@@ -7634,14 +7633,7 @@ function renderWslPanel() {
     if (wslStatusPresentationApi.sqliteHelpClients(status).length > 0) {
       const help = document.createElement('p');
       help.className = 'settings-note wsl-panel-help';
-      const message = document.createElement('span');
-      message.textContent = t('settings.collection.wslPanel.sqliteHelp');
-      const guide = document.createElement('button');
-      guide.type = 'button';
-      guide.className = 'inline-link';
-      guide.textContent = t('settings.collection.wslPanel.setupGuide');
-      guide.addEventListener('click', () => window.tokenMonitor.openExternal?.(TOKEN_MONITOR_WSL_SQLITE_GUIDE_URL));
-      help.append(message, ' ', guide);
+      help.textContent = t('settings.collection.wslPanel.sqliteHelp');
       els.wslPanel.append(help);
     }
   }

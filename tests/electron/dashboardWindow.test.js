@@ -71,10 +71,9 @@ test('dashboard history is gated by the historyEnabled setting', () => {
 test('agent history collection defaults to enabled, matching the widget', () => {
   const agent = read('src', 'agent', 'agent.js');
   const envExample = read('.env.example');
-  const configDoc = read('docs', 'configuration.md');
   assert.match(agent, /TOKEN_MONITOR_HISTORY_ENABLED,\s*true\)/);
   assert.doesNotMatch(envExample, /TOKEN_MONITOR_HISTORY_ENABLED=0/);
-  assert.match(configDoc, /TOKEN_MONITOR_HISTORY_ENABLED=/);
+  assert.match(envExample, /^TOKEN_MONITOR_HISTORY_ENABLED=/m);
 });
 
 test('headless agent leaves Claude Web credentials to the widget transport', () => {

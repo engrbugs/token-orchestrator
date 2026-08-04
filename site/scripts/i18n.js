@@ -155,7 +155,7 @@ var translations = {
     "final.linux.title": "Linux AppImage",
     "final.linux.body": "Portable x64 build",
 
-    "footer.api": "API docs",
+    "footer.privacy": "Privacy",
     "footer.license": "License"
   },
 
@@ -311,7 +311,7 @@ var translations = {
     "final.linux.title": "Linux AppImage",
     "final.linux.body": "可攜式 x64 版本",
 
-    "footer.api": "API 文件",
+    "footer.privacy": "隱私權",
     "footer.license": "授權"
   },
 
@@ -467,7 +467,7 @@ var translations = {
     "final.linux.title": "Linux AppImage",
     "final.linux.body": "便携式 x64 版本",
 
-    "footer.api": "API 文档",
+    "footer.privacy": "隐私",
     "footer.license": "许可证"
   }
 };

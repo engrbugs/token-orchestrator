@@ -1273,14 +1273,10 @@ test('Grok is automatic provider UI, while env token remains documented for head
 test('Copilot env token is documented in env example, not the README overview', () => {
   const envExample = fs.readFileSync(path.join(__dirname, '..', '..', '.env.example'), 'utf8');
   const readme = fs.readFileSync(path.join(__dirname, '..', '..', 'README.md'), 'utf8');
-  const readmeCn = fs.readFileSync(path.join(__dirname, '..', '..', 'README.zh-CN.md'), 'utf8');
-  const readmeTw = fs.readFileSync(path.join(__dirname, '..', '..', 'README.zh-TW.md'), 'utf8');
 
   assert.match(envExample, /COPILOT_API_TOKEN=/);
   assert.match(envExample, /GITHUB_COPILOT_TOKEN/);
   assert.doesNotMatch(readme, /COPILOT_API_TOKEN|GITHUB_COPILOT_TOKEN/);
-  assert.doesNotMatch(readmeCn, /COPILOT_API_TOKEN|GITHUB_COPILOT_TOKEN/);
-  assert.doesNotMatch(readmeTw, /COPILOT_API_TOKEN|GITHUB_COPILOT_TOKEN/);
 });
 
 test('AI Tool Limits owns every live account group and its status pill', () => {

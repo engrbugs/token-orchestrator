@@ -12,7 +12,7 @@ In **Settings → Collection → Data export**:
 - **Export data…** — pick a folder; Token Orchestrator writes the file set below into
   it once, right now.
 - **Auto-export to a folder** — turn this on and choose a folder, and Token
-  Monitor rewrites the file set whenever usage updates, at a frequency you choose
+  Orchestrator rewrites the file set whenever usage updates, at a frequency you choose
   (30 seconds to 60 minutes; default every minute) and skipped entirely when
   nothing changed, so an idle machine never re-uploads unchanged files through
   iCloud / Obsidian Sync. Point it at a folder inside your Obsidian vault (or any

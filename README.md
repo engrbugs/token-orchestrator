@@ -11,7 +11,9 @@ The widget provides:
 
 The app has no system-tray icon. Usage collection continues in the background while the widget is open or minimized.
 
-Supported client and provider identifiers are maintained in the code and documented in [Configuration](docs/configuration.md) and [`.env.example`](.env.example).
+Supported client and provider identifiers are maintained in the code and in [`.env.example`](.env.example).
+
+![Token Orchestrator application](assets/application-main.png)
 
 ## Getting started
 
@@ -27,7 +29,7 @@ npm start
 For an existing checkout, use `git pull` before `npm install`. Then open Settings
 to configure tracked clients, provider limits, and credentials.
 
-The desktop widget is local-only. The legacy headless agent and standalone hub remain available as separate command-line utilities; see [Configuration](docs/configuration.md).
+The desktop widget is local-only. The legacy headless agent and standalone hub remain available as separate command-line utilities; configure them from [`.env.example`](.env.example).
 
 ### Collection defaults
 
@@ -40,6 +42,32 @@ its database can import Claude sessions and cause double-counting. Removing a
 client stops new collection and removes that client from the usage breakdown;
 previously collected usage data is not rewritten.
 
+### Supported AI Tool Limits
+
+The following tools support AI Tool Limits checks. Token usage and session-detail
+support are tracked separately.
+
+| Tool | AI Tool Limits |
+| --- | :---: |
+| Claude Code | ✅ |
+| Codex | ✅ |
+| OpenCode | ✅ |
+| Cursor | ✅ |
+| Antigravity | ✅ |
+| Kimi | ✅ |
+| Grok Build | ✅ |
+| GitHub Copilot | ✅ |
+| MiMo Code | ✅ |
+| ZCode / GLM | ✅ |
+| Kiro | ✅ |
+| DeepSeek | ✅ |
+| OpenRouter | ✅ |
+| Minimax | ✅ |
+| Volcengine | ✅ |
+| Qoder | ✅ |
+| Ollama | ✅ |
+| Third-party APIs | ✅ |
+
 ## Data locations
 
 Application data is stored under the platform's normal user-data directory for
@@ -49,7 +77,12 @@ Token Orchestrator (for example, `%APPDATA%\\Token Orchestrator` on Windows and
 The location can be overridden for shared collector data with
 `TOKEN_MONITOR_SHARED_DIR`.
 
-See [Privacy](docs/privacy.md) for provider/network behavior and [API](docs/API.md) for the legacy hub wire format.
+## More docs
+
+- [Privacy](docs/privacy.md) — network behavior and what stays local
+- [Data export](docs/export.md) — CSV/JSON export from Settings → Collection
+- [GitHub Copilot CLI tracking](docs/github-copilot-otel.md) — OTel setup for the standalone CLI
+- [Code signing](docs/code-signing.md) — Windows Authenticode / SignPath policy
 
 ## Development
 
@@ -68,6 +101,10 @@ For a collector dry run without posting data:
 ```bash
 node src/agent/agent.js --once --dry-run
 ```
+
+## Acknowledgments
+
+This project acknowledges [Javis603/token-monitor](https://github.com/Javis603/token-monitor) as the base and stripped-down foundation for Token Orchestrator, and [erennyuksell/ag-multi-account-switchboard](https://github.com/erennyuksell/ag-multi-account-switchboard) for Antigravity bug fixes and multi-account switching work.
 
 ## License
 

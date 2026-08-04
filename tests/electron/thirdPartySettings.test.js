@@ -244,28 +244,22 @@ test('third-party fallback stays last after named providers across product surfa
   assert.ok(envProviderList.lastIndexOf('thirdparty') > envProviderList.lastIndexOf('ollama'));
   assert.ok(env.indexOf('# Third-party API accounts.') > env.indexOf('# Kimi Code API key.'));
 
-  const api = read('docs/API.md');
-  const providerContract = api.split('\n').find((line) => line.startsWith('`limits.providers[].provider`'));
-  assert.ok(providerContract, 'docs/API.md must document the limits provider enum');
-  assert.ok(providerContract.lastIndexOf('`thirdparty`') > providerContract.lastIndexOf('`ollama`'));
-
-  for (const file of ['README.md', 'README.zh-TW.md', 'README.zh-CN.md', 'README.ja.md', 'README.ko.md']) {
-    const content = read(file);
-    assert.ok(
-      content.indexOf('tools-icon/newapi.png') > content.indexOf('tools-icon/ollama.png'),
-      file
-    );
-  }
+  const limitCollector = read('src/shared/limitCollector.js');
+  const providerIds = limitCollector.match(/const LIMIT_PROVIDER_IDS = \[([^\]]+)\]/)?.[1] || '';
+  assert.ok(providerIds.includes("'thirdparty'"), 'LIMIT_PROVIDER_IDS must include thirdparty');
+  assert.ok(
+    providerIds.lastIndexOf("'thirdparty'") > providerIds.lastIndexOf("'ollama'"),
+    'thirdparty must stay after ollama in LIMIT_PROVIDER_IDS'
+  );
 });
 
 test('third-party adapters document New API compatibility, Custom, assets, and environment variables', () => {
-  for (const file of ['README.md', 'README.zh-TW.md', 'README.zh-CN.md', 'README.ja.md', 'README.ko.md']) {
-    const content = read(file);
-    assert.match(content, /\.github\/assets\/tools-icon\/newapi\.png"/, file);
-    assert.match(content, /Third-party APIs|第三方 API|サードパーティAPI|서드파티 API/, file);
-    assert.match(content, /Custom|自訂|自定义|カスタム|사용자 지정/, file);
-    assert.match(content, /One API/, file);
-  }
+  const html = read('src/electron/renderer/index.html');
+  assert.match(html, /id="thirdpartyAccountGroup"/);
+  assert.match(html, /option value="newapi"/);
+  assert.match(html, /option value="custom"/);
+  const i18n = read('src/electron/renderer/i18n.js');
+  assert.match(i18n, /Third-party API/);
   const env = read('.env.example');
   assert.match(env, /TOKEN_MONITOR_NEWAPI_BASE_URL=/);
   assert.match(env, /TOKEN_MONITOR_NEWAPI_ACCESS_TOKEN=/);

@@ -20,22 +20,6 @@ function rendererClientIds() {
   return [...block.matchAll(/\{ id: '([^']+)'/g)].map((match) => match[1]);
 }
 
-function readmeTrackedClientIds() {
-  const iconToClient = {
-    'hermes-agent': 'hermes',
-    xai: 'grok',
-    'mimo-code': 'micode'
-  };
-  return fs.readFileSync(path.join(rootDir, 'README.md'), 'utf8')
-    .split('\n')
-    .filter((line) => line.startsWith('| <img'))
-    .filter((line) => line.split('|').map((cell) => cell.trim())[4] === '✅')
-    .map((line) => {
-      const icon = line.match(/tools-icon\/([^".]+)\.[a-z]+"/i)?.[1] || '';
-      return iconToClient[icon] || icon;
-    });
-}
-
 test('clientsCsvForSetting uses defaults only for missing settings', () => {
   assert.equal(typeof DEFAULT_CLIENTS, 'string');
   assert.equal(typeof clientsCsvForSetting, 'function');
@@ -66,10 +50,9 @@ test('KNOWN_CLIENTS is a superset of DEFAULT_CLIENTS and still includes opt-in m
   }
 });
 
-test('tracked client defaults, renderer, and README share one display order', () => {
+test('tracked client defaults and renderer share one display order', () => {
   const known = KNOWN_CLIENTS.split(',');
   assert.deepEqual(rendererClientIds(), known);
-  assert.deepEqual(readmeTrackedClientIds(), known);
   assert.deepEqual(DEFAULT_CLIENTS.split(','), known.filter((client) => client !== 'micode'));
 });
 

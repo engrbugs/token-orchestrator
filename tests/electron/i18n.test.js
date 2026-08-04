@@ -40,7 +40,7 @@ test('normalizeLanguage keeps supported choices and falls back to auto', () => {
 test('WSL SQLite recovery guidance is localized without English fallback', () => {
   for (const locale of LANGUAGE_OPTIONS.map((option) => option.value).filter((value) => value !== 'auto')) {
     assert.ok(MESSAGES[locale]['settings.collection.wslPanel.sqliteHelp'], locale);
-    assert.ok(MESSAGES[locale]['settings.collection.wslPanel.setupGuide'], locale);
+    assert.equal(MESSAGES[locale]['settings.collection.wslPanel.setupGuide'], undefined, locale);
   }
 });
 

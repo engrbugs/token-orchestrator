@@ -74,7 +74,7 @@ The default client CSV lives in **one** place: `DEFAULT_CLIENTS` in `src/shared/
 | Row icon CSS | the `.row-icon-<id>` rule in `src/electron/renderer/styles.css` |
 | Icon assets | `assets/icons/<id>.svg` + `.github/assets/tools-icon/<id>.png` |
 | WSL discovery | marker(s) in `WSL_DATA_MARKERS` **and** the marker→id mapping in `MARKER_CLIENTS` (`src/shared/wslUsage.js`) — use the exact roots tokscale reads, including alternate roots. A marker without a `MARKER_CLIENTS` entry attributes to nothing, so a WSL home holding only that client's data would be skipped |
-| Docs & env examples | the supported-tools table in `README.md` and its translations (`README.*.md`) + the client CSV in `.env.example`. Every locale's prose tool/provider counts must match its own table — `tests/docs/readmeConsistency.test.js` fails on a stale count or a table that drifts between locales |
+| Docs & env examples | client/provider ids in code + the client CSV and provider credentials in `.env.example`. Keep `docs/privacy.md`, `docs/export.md`, `docs/github-copilot-otel.md`, and `docs/code-signing.md` aligned with shipped product behavior |
 | Guard tests | the expected-client lists in `tests/shared/clientTracking.test.js` |
 
 One caveat on top of the table:
@@ -85,7 +85,7 @@ One caveat on top of the table:
 
 ### Data flow contract
 
-The hub stores normalized device records (`normalizeDeviceRecord` in `usage.js`) and aggregates on read (`aggregateDevices`). The wire shape between agent/widget and hub is whatever `collectUsageOnce()` returns — that function is the source of truth, and `docs/API.md` documents the full contract. The core is `{deviceId, hostname, platform, updatedAt, agentVersion, today, month, allTime}` (each period has `{totalTokens, costUsd, clients, clientCosts, models, modelCosts}`), plus attribution fields (`trackedClients`, `clientStatus`, `wslStatus`, `periodWindows`, `projectsEnabled`) and optional `osName` / `osVersion` / `agentRuntime` / `history` / `limits`.
+The hub stores normalized device records (`normalizeDeviceRecord` in `usage.js`) and aggregates on read (`aggregateDevices`). The wire shape between agent/widget and hub is whatever `collectUsageOnce()` returns — that function is the source of truth. The core is `{deviceId, hostname, platform, updatedAt, agentVersion, today, month, allTime}` (each period has `{totalTokens, costUsd, clients, clientCosts, models, modelCosts}`), plus attribution fields (`trackedClients`, `clientStatus`, `wslStatus`, `periodWindows`, `projectsEnabled`) and optional `osName` / `osVersion` / `agentRuntime` / `history` / `limits`.
 
 ### Stale devices
 
@@ -94,7 +94,7 @@ A device is "stale" if `Date.now() - receivedAt > staleAfterMs` (default 10 min)
 ## Conventions
 
 - **Consider best practices first.** When picking an approach — library vs hand-roll, pattern vs custom, framework default vs override — start by checking the ecosystem convention, not by optimizing for "fewer deps" or "less code". If a hand-rolled solution is genuinely better, argue that *after* weighing the convention.
-- **This project has external users.** Settings keys, env vars, CLI flags, hub endpoints, and the wire shape (`docs/API.md`) are compatibility surfaces — treat changes to them as breaking and think about migration. Internal code can still be refactored and renamed freely.
+- **This project has external users.** Settings keys, env vars, CLI flags, hub endpoints, and the collector/hub wire shape (`collectUsageOnce()` / `normalizeDeviceRecord`) are compatibility surfaces — treat changes to them as breaking and think about migration. Internal code can still be refactored and renamed freely.
 - **Don't add dependencies or new tooling without discussing it first** (in the issue or PR description).
 - **Keep this file lean and current.** Document non-obvious constraints and gotchas, not descriptions the code already makes obvious. Avoid hardcoded counts and exhaustive lists (prefer a command like `ls src/shared/` over a hand-maintained one); verify claims against the code before writing them; delete anything that has gone stale — an outdated note is worse than none.
 

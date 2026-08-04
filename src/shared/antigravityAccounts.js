@@ -31,12 +31,27 @@ const RETRIEVE_QUOTA_URLS = [
   'https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuota'
 ];
 
-const CLIENT_ID = '[REDACTED_GOOGLE_OAUTH_CLIENT_ID]';
-const CLIENT_SECRET = '[REDACTED_GOOGLE_OAUTH_CLIENT_SECRET]';
 // Google's cloudcode-pa endpoints gate Antigravity agent quota behind this UA.
 // A generic Node fetch UA gets the post-migration consumer stub (4 Gemini models
 // all remainingFraction:1, no enrollment). Discovered via ag-multi-account-switchboard.
 const ANTIGRAVITY_USER_AGENT = 'Antigravity/4.1.29 Chrome/132.0.6834.160 Electron/39.2.3';
+
+function googleOAuthConfig(env = process.env) {
+  return {
+    clientId: cleanText(env.ANTIGRAVITY_GOOGLE_CLIENT_ID, 256),
+    clientSecret: cleanText(env.ANTIGRAVITY_GOOGLE_CLIENT_SECRET, 512)
+  };
+}
+
+function requireGoogleOAuthConfig(env = process.env) {
+  const config = googleOAuthConfig(env);
+  if (!config.clientId || !config.clientSecret) {
+    const error = new Error('Antigravity Google OAuth credentials are not configured. Set ANTIGRAVITY_GOOGLE_CLIENT_ID and ANTIGRAVITY_GOOGLE_CLIENT_SECRET in .env.');
+    error.code = 'missingOAuthCredentials';
+    throw error;
+  }
+  return config;
+}
 
 function cleanText(value, max = 512) {
   return String(value || '').trim().slice(0, max);
@@ -104,9 +119,10 @@ async function jsonRequest(url, init, deps = {}) {
 }
 
 async function refreshAccessToken(refreshToken, deps = {}) {
+  const { clientId, clientSecret } = requireGoogleOAuthConfig(deps.env);
   const body = new URLSearchParams({
-    client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
+    client_id: clientId,
+    client_secret: clientSecret,
     refresh_token: refreshToken,
     grant_type: 'refresh_token'
   }).toString();
@@ -217,13 +233,14 @@ async function startAntigravityOAuthFlow(options = {}, deps = {}) {
   const openExternal = deps.openExternal;
   if (typeof openExternal !== 'function') throw new Error('Browser opener unavailable');
   const fetchFn = deps.fetch || fetch;
+  const { clientId, clientSecret } = requireGoogleOAuthConfig(deps.env);
   const httpApi = deps.http || http;
   const signal = options.signal;
   const port = Number(options.port) || 19876 + crypto.randomInt(0, 100);
   const redirectUri = `http://127.0.0.1:${port}/callback`;
   const state = crypto.randomBytes(16).toString('hex');
   const authUrl = `${GOOGLE_AUTH_URL}?${new URLSearchParams({
-    client_id: CLIENT_ID,
+    client_id: clientId,
     redirect_uri: redirectUri,
     response_type: 'code',
     scope: OAUTH_SCOPES.join(' '),
@@ -280,8 +297,8 @@ async function startAntigravityOAuthFlow(options = {}, deps = {}) {
           method: 'POST',
           headers: { 'content-type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
-            client_id: CLIENT_ID,
-            client_secret: CLIENT_SECRET,
+            client_id: clientId,
+            client_secret: clientSecret,
             code,
             grant_type: 'authorization_code',
             redirect_uri: redirectUri
