@@ -104,10 +104,11 @@ node src/agent/agent.js --once --dry-run
 
 ## Acknowledgments
 
+This project acknowledges [Javis603/token-monitor](https://github.com/Javis603/token-monitor) as the base and stripped-down foundation for Token Orchestrator, and [erennyuksell/ag-multi-account-switchboard](https://github.com/erennyuksell/ag-multi-account-switchboard) for Antigravity bug fixes and multi-account switching work.
 This project is maintained in the [engrbugs/token-orchestrator](https://github.com/engrbugs/token-orchestrator) repository.
 
 ## License
 
-MIT
+[MIT](LICENSE)
 
 <!-- repo-activity-bump: 2026-08-04T19:08:49Z -->
