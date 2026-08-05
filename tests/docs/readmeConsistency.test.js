@@ -19,15 +19,14 @@ test('README describes the current desktop surface', () => {
   const readme = read('README.md');
   assert.match(readme, /AI Tool Limits/);
   assert.match(readme, /Codex and Antigravity accounts/);
-  assert.match(readme, /no system-tray icon/);
-  assert.match(readme, /minimize and close|local-only/i);
+  assert.match(readme, /desktop widget/);
+  assert.match(readme, /local-first/i);
 });
 
-test('README keeps provider accounts inside AI Tool Limits and has no tray mode', () => {
+test('README keeps provider accounts inside AI Tool Limits and describes presentation modes', () => {
   const readme = read('README.md');
   assert.match(readme, /AI Tool Limits/);
-  assert.match(readme, /no system-tray icon/i);
-  assert.doesNotMatch(readme, /tray-only mode/i);
+  assert.match(readme, /tray.*floating|floating.*tray/i);
 });
 
 test('kept product docs still exist', () => {
