@@ -1,23 +1,56 @@
 # Token Orchestrator
 
-Token Orchestrator is a local-first desktop companion for AI coding usage, provider limits, and account management.
+> A local-first desktop control center for seeing how your AI coding tools are being used.
 
-## Current app
+When work is spread across Claude Code, Codex, Cursor, OpenCode, Copilot, and other AI tools, usage lives in different places and limits reset on different schedules. Token Orchestrator brings the useful parts into one quiet desktop surface: usage, cost, sessions, provider limits, account state, and history.
 
-The widget provides:
+It is built for developers who want a quick answer to questions like:
 
-- Local usage and cost collection through `tokscale`
-- AI Tool Limits for supported providers, including multiple Codex and Antigravity accounts
+- How much have I used today?
+- Which tool or model is driving the cost?
+- Which account or quota is closest to its limit?
+- What did I work on recently?
+- Can I keep the data on my own machine?
 
-The app has no system-tray icon. Usage collection continues in the background while the widget is open or minimized.
+![Token Orchestrator desktop widget](assets/application-main.png)
 
-Supported client and provider identifiers are maintained in the code and in [`.env.example`](.env.example).
+## What it does
 
-![Token Orchestrator application](assets/application-main.png)
+- Collects local usage and cost data through [tokscale](https://www.npmjs.com/package/tokscale)
+- Shows sessions, projects, model breakdowns, daily history, and trends
+- Checks supported AI Tool Limits, including multiple Codex and Antigravity accounts
+- Supports provider-specific account and API-key management
+- Offers desktop, tray, and floating presentation modes where supported
+- Keeps the core usage view local-first, with network requests limited to enabled provider checks, update checks, public status/exchange-rate data, or explicitly enabled integrations
+- Exports usage data as CSV or JSON
+
+The goal is visibility, not surveillance: see your own development activity clearly without sending it to a Token Orchestrator-hosted service.
+
+## How it works
+
+```mermaid
+flowchart LR
+    A[Local AI tool data] --> B[Tokscale + collectors]
+    B --> C[Local usage history]
+    C --> D[Desktop widget]
+    C --> E[Projects and sessions]
+    C --> F[Trends and export]
+    G[Provider accounts] --> H[AI Tool Limits checks]
+    H --> D
+    D --> I[Home, Limits, Status, Settings]
+```
+
+Usage collection and presentation are separate from provider-limit checks. That means the local usage view can remain useful even when a provider is not signed in or its limits endpoint is unavailable.
 
 ## Getting started
 
-Clone or update the repository, install dependencies, and start the widget:
+### Requirements
+
+- Windows, macOS, or Linux
+- Node.js 22.13.0 or newer
+- npm
+
+### Run from source
 
 ```bash
 git clone https://github.com/engrbugs/token-orchestrator.git
@@ -26,28 +59,23 @@ npm install
 npm start
 ```
 
-For an existing checkout, use `git pull` before `npm install`. Then open Settings
-to configure tracked clients, provider limits, and credentials.
+Open Settings to choose the clients to track, configure provider accounts, and select the limits you want to check. The default collection list is documented in [src/shared/clientTracking.js](src/shared/clientTracking.js).
 
-The desktop widget is local-only. The legacy headless agent and standalone hub remain available as separate command-line utilities; configure them from [`.env.example`](.env.example).
+### Environment configuration
 
-### Collection defaults
+Copy [.env.example](.env.example) to .env only when you need environment-managed settings, the headless agent, or sync mode. The desktop widget can be used in single-device local mode without a hub.
 
-The Collection settings control which client data is scanned. The default list
-is defined in `src/shared/clientTracking.js`; the current defaults include
-Claude Code, Codex, OpenCode, Hermes, OpenClaw, Cursor, Antigravity, Cline,
-Kimi, Qwen, Grok, GitHub Copilot, Pi, Zed, Kilo Code, ZCode, Kiro, CodeBuddy,
-WorkBuddy, and Proma. MiMo Code is available in Settings but is opt-in because
-its database can import Claude sessions and cause double-counting. Removing a
-client stops new collection and removes that client from the usage breakdown;
-previously collected usage data is not rewritten.
+Keep secrets out of commits. The widget stores its local settings and credentials in the platform user-data directory, for example:
 
-### Supported AI Tool Limits
+- Windows: %APPDATA%\\Token Orchestrator
+- macOS: ~/Library/Application Support/Token Orchestrator
+- Linux: the normal Electron user-data directory
 
-The following tools support AI Tool Limits checks. Token usage and session-detail
-support are tracked separately.
+## Supported coverage
 
-| Tool | AI Tool Limits |
+Token usage, session details, and AI Tool Limits are tracked independently. Availability can vary by client, account type, operating system, and provider API.
+
+| Tool or provider | AI Tool Limits |
 | --- | :---: |
 | Claude Code | ✅ |
 | Codex | ✅ |
@@ -68,46 +96,63 @@ support are tracked separately.
 | Ollama | ✅ |
 | Third-party APIs | ✅ |
 
-## Data locations
+“Supported” means the repository contains a provider adapter and limit-checking path; it does not guarantee that every account or plan exposes every metric.
 
-Application data is stored under the platform's normal user-data directory for
-Token Orchestrator (for example, `%APPDATA%\\Token Orchestrator` on Windows and
-`~/Library/Application Support/Token Orchestrator` on macOS). This includes
-`settings.json`, `credentials.json`, collector state, and managed account data.
-The location can be overridden for shared collector data with
-`TOKEN_MONITOR_SHARED_DIR`.
+## Build a stable local demo
 
-## More docs
-
-- [Privacy](docs/privacy.md) — network behavior and what stays local
-- [Data export](docs/export.md) — CSV/JSON export from Settings → Collection
-- [GitHub Copilot CLI tracking](docs/github-copilot-otel.md) — OTel setup for the standalone CLI
-- [Code signing](docs/code-signing.md) — Windows Authenticode / SignPath policy
-
-## Development
-
-Requirements: Node.js 22.13 or newer.
+The project is an Electron desktop application. The fastest reproducible packaging check is:
 
 ```bash
 npm install
-npm start          # Electron widget
+npm run pack
+```
+
+That creates an unpacked Windows build in dist/win-unpacked/. For distributable Windows artifacts, use:
+
+```bash
+npm run dist:win
+```
+
+The release configuration also defines macOS and Linux targets. Code-signing credentials and provider-specific release requirements are intentionally separate from the source checkout; see [docs/code-signing.md](docs/code-signing.md).
+
+## Development checks
+
+```bash
 npm test           # node:test suite
 npm run lint       # ESLint
 npm run verify     # lint + tests
 ```
 
-For a collector dry run without posting data:
+For a collector dry run that does not post data:
 
 ```bash
 node src/agent/agent.js --once --dry-run
 ```
 
-## Acknowledgments
+The headless agent and standalone hub remain available for compatibility and sync-oriented setups. The desktop app does not require them for single-device local use.
 
-This project is maintained in the [engrbugs/token-orchestrator](https://github.com/engrbugs/token-orchestrator) repository.
+## Data and privacy
+
+Token Orchestrator does not operate a hosted usage-collection service. Network requests are limited to documented or user-enabled features: provider checks, update checks, public status/exchange-rate data, and explicitly enabled Discord or sync integrations.
+
+Read the details in:
+
+- [Privacy](docs/privacy.md)
+- [Data export](docs/export.md)
+- [GitHub Copilot CLI tracking](docs/github-copilot-otel.md)
+- [Code signing](docs/code-signing.md)
+
+## Project shape
+
+- src/electron/ — Electron main process, renderer, tray, floating window, and settings UI
+- src/shared/ — collectors, provider adapters, history, limits, credentials, and exports
+- src/agent/ — optional headless collection
+- src/hub/ — optional sync hub
+- tests/ — behavior and presentation tests
+- assets/application-main.png — redacted product screenshot
+
+Token Orchestrator is a practical observability layer for AI-assisted development: local enough to trust, broad enough to be useful, and explicit about where provider-specific data comes from.
 
 ## License
 
 MIT
-
-<!-- repo-activity-bump: 2026-08-04T19:08:49Z -->

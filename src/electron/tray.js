@@ -186,7 +186,7 @@ function createTray({
 }) {
   const { Tray, Menu } = require('electron');
   const tray = new Tray(buildTrayIcon());
-  tray.setToolTip('Token Monitor');
+  tray.setToolTip('Token Orchestrator');
 
   tray.on('click', () => onToggle(tray));
   tray.on('right-click', () => {
