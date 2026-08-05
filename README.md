@@ -14,6 +14,10 @@ It is built for developers who want a quick answer to questions like:
 
 ![Token Orchestrator desktop widget](assets/application-main.png)
 
+### Download for Windows
+
+The current stable Windows build is available on the [v0.39.0 release page](https://github.com/engrbugs/token-orchestrator/releases/tag/v0.39.0) with installer and portable downloads.
+
 ## What it does
 
 - Collects local usage and cost data through [tokscale](https://www.npmjs.com/package/tokscale)
