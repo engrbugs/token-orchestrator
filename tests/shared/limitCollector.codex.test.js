@@ -169,8 +169,8 @@ test('Codex provider reads quota windows from alternate rate limit ids', () => {
 
   assert.equal(provider.status, 'ok');
   assert.deepEqual(provider.windows.map((window) => window.kind), ['session', 'weekly']);
-  assert.equal(provider.windows[0].label, undefined);
-  assert.equal(provider.windows[1].label, 'gpt-5.4');
+  assert.equal(provider.windows[0].label, '');
+  assert.equal(provider.windows[1].label, '');
   assert.equal(provider.windows[0].remainingPercent, 90);
   assert.equal(provider.windows[1].remainingPercent, 75);
 });
@@ -222,8 +222,15 @@ test('Codex provider keeps distinct conflicting alternate weekly pools', () => {
   }
 });
 
-test('Codex provider gives the Spark weekly pool its Web UI label', () => {
+test('Codex provider gives an additional Spark weekly pool its Web UI label', () => {
   const provider = mapCodexRateLimitsToProvider({
+    rateLimits: {
+      primary: {
+        usedPercent: 10,
+        resetsAt: '2026-06-01T05:00:00Z',
+        windowDurationMins: 300
+      }
+    },
     rateLimitsByLimitId: {
       codex_bengalfox: {
         secondary: {
@@ -235,7 +242,8 @@ test('Codex provider gives the Spark weekly pool its Web UI label', () => {
     }
   });
 
-  assert.equal(provider.windows[0].label, 'GPT-5.3-Codex-Spark');
+  assert.equal(provider.windows[0].label, '');
+  assert.equal(provider.windows[1].label, 'GPT-5.3-Codex-Spark');
 });
 
 test('Codex provider does not synthesize a Spark weekly pool when it is absent', () => {
