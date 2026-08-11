@@ -2647,6 +2647,9 @@ html.is-windows .settings-panel select option {
   grid-column: 1 / -1;
   max-width: none;
 }
+.home-limit-window-wide {
+  grid-column: 1 / -1;
+}
 .home-limit-window {
   display: grid;
   min-width: 0;
@@ -3378,6 +3381,7 @@ html.is-windows .settings-panel select option {
 .limit-windows > .limit-window:only-child {
   grid-column: 1 / -1;
 }
+
 .limit-windows-cursor {
   grid-template-columns: 1fr;
   gap: 8px;
