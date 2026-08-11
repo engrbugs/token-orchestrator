@@ -120,8 +120,8 @@
             const aPriority = windowPriority.get(a.kind) ?? 10;
             const bPriority = windowPriority.get(b.kind) ?? 10;
             return aPriority - bPriority || a.index - b.index;
-          })
-          .slice(0, 2)
+          });
+        const visibleWindows = windows.slice(0, providerId === 'codex' ? windows.length : 2)
           .map(({ index: _index, ...window }) => window);
         // Keep configured accounts visible even when their quota probe failed.
         // Otherwise Settings can show two accounts while Home silently drops
@@ -136,7 +136,7 @@
           status: account.status || '',
           statusLabel: account.statusLabel || '',
           lowestRemaining: Math.min(...windows.map((window) => window.remainingPercent ?? 100)),
-          windows,
+          windows: visibleWindows,
           index
         };
       })

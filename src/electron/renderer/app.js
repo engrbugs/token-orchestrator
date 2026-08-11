@@ -4522,6 +4522,9 @@ function renderHomeLimitModule() {
     account.append(mark, name);
     const windows = document.createElement('div');
     windows.className = 'home-limit-windows';
+    const codexWeeklyCount = row.providerId === 'codex'
+      ? row.windows.filter((window) => window.kind === 'weekly').length
+      : 0;
     if (row.windows.length === 0 && row.statusLabel) {
       const metric = document.createElement('div');
       metric.className = 'home-limit-window';
@@ -4540,6 +4543,7 @@ function renderHomeLimitModule() {
     for (const window of row.windows) {
       const metric = document.createElement('div');
       metric.className = 'home-limit-window';
+      if (codexWeeklyCount > 1 && window.kind === 'session') metric.classList.add('home-limit-window-wide');
       const line = document.createElement('div');
       line.className = 'home-limit-window-line';
       const label = document.createElement('span');
