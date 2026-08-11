@@ -176,6 +176,25 @@ test('homeLimitAccounts keeps account windows together and sorts lowest remainin
   assert.equal(rows[1].lowestRemaining, 70);
 });
 
+test('homeLimitAccounts keeps all codex weekly windows visible and sorted by priority', () => {
+  const rows = homeLimitAccounts([
+    {
+      key: 'codex:3',
+      providerId: 'codex',
+      name: 'codex@example.com',
+      windows: [
+        { kind: 'weekly', usedPercent: 60, label: 'gpt-5.4' },
+        { kind: 'session', usedPercent: 10 },
+        { kind: 'weekly', usedPercent: 2, label: 'gpt-5.4-mini' }
+      ]
+    }
+  ]);
+
+  assert.equal(rows.length, 1);
+  assert.deepEqual(rows[0].windows.map((window) => window.kind), ['session', 'weekly', 'weekly']);
+  assert.deepEqual(rows[0].windows.map((window) => window.label), ['session', 'gpt-5.4', 'gpt-5.4-mini']);
+});
+
 test('Home keeps unavailable managed accounts visible without quota windows', () => {
   const rows = homeLimitAccountsForProviders({
     providers: [
