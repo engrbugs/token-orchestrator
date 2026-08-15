@@ -12,16 +12,20 @@
 </p>
 
 <p align="center">
-  <img src="assets/icon.png" alt="Token Orchestrator Icon" width="64" height="64">
+  <img src="assets/icon.png" alt="Token Orchestrator Icon" width="128" height="128">
 </p>
 
-# Token Orchestrator
+<h1 align="center">Token Orchestrator</h1>
 
-Open-source, local-first control center for tracking real-time tokens, spend, and rate limits across 21+ AI coding tools.
+<p align="center">
+  <strong>Open-source, local-first control center for tracking real-time tokens, spend, and rate limits across 21+ AI coding tools.</strong>
+</p>
+
+<p align="center">
+  <a href="https://engrbugs.github.io/token-orchestrator/"><strong>Explore live documentation &amp; interactive showcase at engrbugs.github.io/token-orchestrator →</strong></a>
+</p>
 
 **Token Orchestrator** brings usage, cost, sessions, provider limits, multi-account quotas, and history into one quiet desktop surface. When work is spread across `Claude Code`, `Codex`, `Cursor`, `OpenCode`, `Antigravity`, `Copilot`, and other AI tools, Token Orchestrator tracks everything on your own machine with zero telemetry and zero cloud lock-in.
-
-[Preview interactive showcase, architecture, and live docs at engrbugs.github.io/token-orchestrator →](https://engrbugs.github.io/token-orchestrator/)
 
 - **21+ Tracked Coding Clients** — automatic session log discovery with [tokscale](https://www.npmjs.com/package/tokscale)
 - **19+ Live Limits & Quotas** — 5-hour rolling windows, daily resets, credit balances, and multi-account Antigravity & Codex switching
