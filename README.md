@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/icon.png" alt="Token Orchestrator Icon" width="128" height="128">
+  <a href="#token-orchestrator"><img src="assets/icon.png" alt="Token Orchestrator Icon" width="128" height="128"></a>
 </p>
 
 <h1 align="center">Token Orchestrator</h1>
