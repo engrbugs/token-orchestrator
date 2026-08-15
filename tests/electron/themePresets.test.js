@@ -39,8 +39,8 @@ test('interface palette is the four always-visible colours, each mapped to a CSS
     assert.ok(THEME_VAR_MAP[key], `missing CSS var for ${key}`);
     assert.ok(isValidHex(DEFAULT_THEME[key]), `default for ${key} is not hex`);
   }
-  // bg default must equal the --glass-rgb default (48, 52, 56).
-  assert.equal(hexToRgbTriplet(DEFAULT_THEME.bg), '48, 52, 56');
+  // bg default must equal the --glass-rgb default (16, 24, 39).
+  assert.equal(hexToRgbTriplet(DEFAULT_THEME.bg), '16, 24, 39');
 });
 
 test('semantic success states stay independent from the custom accent', () => {

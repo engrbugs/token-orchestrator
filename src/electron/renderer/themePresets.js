@@ -25,12 +25,12 @@
   };
 
   // Built-in defaults — must mirror the :root values in styles.css.
-  // bg #303438 == rgb(48, 52, 56) (the --glass-rgb default).
+  // bg #101827 == rgb(16, 24, 39) (the --glass-rgb default).
   const DEFAULT_THEME = {
-    accent: '#b7ead4',
-    bg: '#303438',
-    text: '#eef5fb',
-    muted: '#a3adbb'
+    accent: '#67e8f9',
+    bg: '#101827',
+    text: '#f8fafc',
+    muted: '#94a3b8'
   };
 
   // Curated one-click themes. Each is a full palette — accent + background tint
@@ -43,7 +43,7 @@
   // flip in themeCssVarEntries() so borders/panels stay visible on a pale base.
   const THEME_PRESETS = [
     { id: 'default', colors: { ...DEFAULT_THEME } },
-    { id: 'obsidian', colors: { accent: '#e6e8ec', bg: '#0b0c0e', text: '#eceef2', muted: '#8f949c' } },
+    { id: 'obsidian', colors: { accent: '#a5b4fc', bg: '#080b14', text: '#eef2ff', muted: '#8d96ad' } },
     { id: 'porcelain', colors: { accent: '#2563eb', bg: '#f6f7f9', text: '#1c1f26', muted: '#5b626d' } }
   ];
 

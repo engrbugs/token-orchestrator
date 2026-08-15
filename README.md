@@ -14,12 +14,12 @@ It is built for developers who want a quick answer to questions like:
 
 <table>
   <tr>
-    <td align="center" valign="top" width="42%">
-      <img src="assets/application-main.png" alt="Token Orchestrator — AI Tool Limits overview" width="340" /><br />
+    <td align="center" valign="top" width="50%">
+      <img src="assets/application-main.png" alt="Token Orchestrator — AI Tool Limits overview" width="400" /><br />
       <sub><strong>AI Tool Limits</strong> — multi-account quotas at a glance</sub>
     </td>
-    <td align="center" valign="top" width="58%">
-      <img src="assets/application-settings-limits.png" alt="Token Orchestrator — provider account setup" width="480" /><br />
+    <td align="center" valign="top" width="50%">
+      <img src="assets/application-settings-limits.png" alt="Token Orchestrator — provider account setup" width="400" /><br />
       <sub><strong>Provider setup</strong> — enable tools, accounts, and connection status</sub>
     </td>
   </tr>

@@ -1,6 +1,6 @@
 :root {
   color-scheme: dark;
-  --glass-rgb: 48, 52, 56;
+  --glass-rgb: 16, 24, 39;
   /* Surface overlays + borders are "light on dark" by default. A light theme
      (or any light --glass-rgb) flips these to dark via JS so panels/borders stay
      visible on a pale background — see themeCssVarEntries(). */
@@ -8,41 +8,41 @@
   --line-rgb: 232, 238, 244;
   /* Recessed surfaces: the settings panel/tooltip card (--panel-rgb) and sunken
      tracks/inputs (--sunken-rgb). Both flip light on a light theme. */
-  --panel-rgb: 16, 21, 30;
-  --sunken-rgb: 4, 8, 13;
-  --glass-alpha: 0.68;
-  --line-alpha: 0.138;
-  --line-strong-alpha: 0.238;
-  --control-alpha: 0.049;
+  --panel-rgb: 10, 16, 30;
+  --sunken-rgb: 5, 10, 21;
+  --glass-alpha: 0.78;
+  --line-alpha: 0.16;
+  --line-strong-alpha: 0.3;
+  --control-alpha: 0.065;
   --glass: rgba(var(--glass-rgb), var(--glass-alpha));
-  --glass-filter: blur(32px) saturate(115%);
+  --glass-filter: blur(32px) saturate(135%);
   --floating-bubble-radius: 17px;
-  --glass-strong: rgba(31, 35, 41, 0.56);
-  --glass-soft: rgba(var(--overlay-rgb), 0.05);
+  --glass-strong: rgba(12, 19, 35, 0.78);
+  --glass-soft: rgba(var(--overlay-rgb), 0.06);
   --line: rgba(var(--line-rgb), var(--line-alpha));
   --line-strong: rgba(var(--line-rgb), var(--line-strong-alpha));
-  --text: #eef5fb;
-  --muted: #a3adbb;
-  --accent: #b7ead4;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --accent: #67e8f9;
   /* RGB triplet of --accent, for accent-tinted borders / glows /
      active states. Driven from the chosen accent so they flip together — see
      themeCssVarEntries(). Must match --accent above. */
-  --accent-rgb: 183, 234, 212;
+  --accent-rgb: 103, 232, 249;
   /* Semantic success is deliberately independent from the custom accent.
      themeCssVarEntries() switches this to a darker green on light themes. */
-  --success: #b7ead4;
-  --success-rgb: 183, 234, 212;
-  --number: #f3fbf7;
+  --success: #6ee7b7;
+  --success-rgb: 110, 231, 183;
+  --number: #f8fafc;
   /* Semantic blue, exposed as a triplet so the trend line and its area fill can
      share one hue (and match the blue heatmap ramp) instead of the fill borrowing
      the customisable --accent. */
-  --blue-rgb: 115, 189, 245;
+  --blue-rgb: 129, 140, 248;
   --blue: rgb(var(--blue-rgb));
-  --orange: #f4a073;
-  --purple: #b394f4;
-  --yellow: #f1d973;
-  --red: #f47788;
-  --shadow: rgba(0, 0, 0, 0.36);
+  --orange: #fbad7a;
+  --purple: #c4b5fd;
+  --yellow: #fcd34d;
+  --red: #fb7185;
+  --shadow: rgba(2, 6, 23, 0.58);
 }
 * { box-sizing: border-box; }
 html, body {
@@ -75,8 +75,11 @@ input, textarea, [contenteditable="true"] {
   isolation: isolate;
   border-radius: 14px;
   clip-path: inset(0 round 14px);
-  background: var(--glass);
-  box-shadow: 0 22px 55px var(--shadow);
+  background:
+    radial-gradient(120% 70% at 0% 0%, rgba(var(--accent-rgb), 0.14), transparent 54%),
+    radial-gradient(95% 75% at 105% 100%, rgba(var(--blue-rgb), 0.13), transparent 56%),
+    var(--glass);
+  box-shadow: 0 24px 64px var(--shadow), inset 0 1px 0 rgba(var(--overlay-rgb), 0.1);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
 }
@@ -202,10 +205,12 @@ body.is-windows.floating-bubble-collapsed-right .floating-bubble-tab {
 .titlebar > div:first-child { min-width: 0; flex: 1 1 auto; }
 .app-title {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  gap: 7px;
   min-width: 0;
   font-size: clamp(13px, 4.5vw, 16px);
-  font-weight: 700;
+  font-weight: 650;
+  letter-spacing: -0.035em;
   line-height: 1.12;
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.35);
 }
@@ -217,9 +222,16 @@ body.is-windows.floating-bubble-collapsed-right .floating-bubble-tab {
   text-overflow: ellipsis;
 }
 .app-title-mark {
-  display: none;
-  font-weight: 700;
+  display: inline-block;
+  flex: 0 0 19px;
+  width: 19px;
+  height: 19px;
+  overflow: hidden;
+  background: url("../../../assets/icons/token-orchestrator.svg") center / contain no-repeat;
+  color: transparent;
+  font-size: 0;
   line-height: 1;
+  filter: drop-shadow(0 3px 7px rgba(var(--accent-rgb), 0.28));
 }
 /* Offscreen probe: rendered with the same font/size as the title, used by JS */
 /* to detect "would Token Orchestrator still fit?". Independent of the live text */
@@ -236,7 +248,7 @@ body.is-windows.floating-bubble-collapsed-right .floating-bubble-tab {
 /* driven by JS overflow detection (see renderer/app.js). */
 .shell.title-collapsed .app-title-text, .shell.title-icon-only .app-title-text { display: none; }
 .shell.title-collapsed .app-title-mark, .shell.title-icon-only .app-title-mark {
-  display: inline;
+  display: inline-block;
   position: relative;
 }
 .live-dot {
@@ -2263,10 +2275,10 @@ html.is-windows .settings-panel select option {
   gap: 2px;
   padding: 3px;
   width: 100%;
-  border: 1px solid rgba(var(--line-rgb), 0.09);
-  border-radius: 10px;
-  background: rgba(var(--overlay-rgb), 0.026);
-  box-shadow: inset 0 1px 0 rgba(var(--overlay-rgb), 0.045);
+  border: 1px solid rgba(var(--line-rgb), 0.14);
+  border-radius: 12px;
+  background: rgba(var(--sunken-rgb), 0.3);
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.18), 0 1px 0 rgba(var(--overlay-rgb), 0.035);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
 }
@@ -2277,10 +2289,10 @@ html.is-windows .settings-panel select option {
   bottom: 3px;
   left: 3px;
   width: calc((100% - 10px) / 3);
-  border: 1px solid rgba(var(--line-rgb), 0.13);
-  border-radius: 6px;
-  background: rgba(var(--overlay-rgb), 0.06);
-  box-shadow: inset 0 1px 0 rgba(var(--overlay-rgb), 0.075);
+  border: 1px solid rgba(var(--accent-rgb), 0.26);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.16), rgba(var(--blue-rgb), 0.11));
+  box-shadow: inset 0 1px 0 rgba(var(--overlay-rgb), 0.13), 0 3px 10px rgba(var(--accent-rgb), 0.08);
   pointer-events: none;
   transform: translate3d(calc(var(--period-index) * (100% + 2px)), 0, 0);
   transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -2299,18 +2311,20 @@ html.is-windows .settings-panel select option {
 .tab:hover { color: var(--text); }
 .tab.active {
   border-color: transparent;
-  color: var(--accent);
+  color: var(--text);
   background: transparent;
   box-shadow: none;
 }
 .total-panel {
   position: relative;
   z-index: 1;
-  padding: 2px 2px 12px;
+  padding: 8px 12px 14px;
   border: 0;
   border-radius: 0;
-  background: transparent;
-  box-shadow: none;
+  background: linear-gradient(125deg, rgba(var(--overlay-rgb), 0.075), rgba(var(--overlay-rgb), 0.025));
+  border: 1px solid rgba(var(--line-rgb), 0.14);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(var(--overlay-rgb), 0.09), 0 8px 22px rgba(0, 0, 0, 0.12);
   backdrop-filter: none;
 }
 .label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 11px; }
@@ -2326,7 +2340,8 @@ html.is-windows .settings-panel select option {
   margin-top: 8px;
   color: var(--number);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
-  font-weight: 500;
+  font-weight: 650;
+  letter-spacing: -0.055em;
   font-size: clamp(30px, 11vw, 46px);
   line-height: 1.05;
   /* Equal-width digits so the counting animation does not wobble the number's
@@ -2430,12 +2445,12 @@ html.is-windows .settings-panel select option {
   display: grid;
   width: 100%;
   min-width: 0;
-  gap: 7px;
-  padding: 0 0 12px;
-  border: 0;
-  border-bottom: 1px solid rgba(var(--line-rgb), 0.12);
-  border-radius: 0;
-  background: transparent;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid rgba(var(--line-rgb), 0.12);
+  border-radius: 13px;
+  background: linear-gradient(135deg, rgba(var(--overlay-rgb), 0.055), rgba(var(--overlay-rgb), 0.018));
+  box-shadow: inset 0 1px 0 rgba(var(--overlay-rgb), 0.07);
   color: inherit;
   text-align: left;
   cursor: pointer;
@@ -2443,7 +2458,10 @@ html.is-windows .settings-panel select option {
 }
 .home-module:hover,
 .home-module:focus-visible {
-  opacity: 0.94;
+  opacity: 1;
+  border-color: rgba(var(--accent-rgb), 0.28);
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.09), rgba(var(--blue-rgb), 0.04));
+  transform: translateY(-1px);
 }
 .home-module:focus-visible {
   outline: 2px solid rgba(var(--accent-rgb), 0.32);
@@ -3851,6 +3869,7 @@ html.is-windows .limit-live-badge {
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  padding-top: 2px;
   gap: 8px;
   color: var(--muted);
   font-size: 11px;
