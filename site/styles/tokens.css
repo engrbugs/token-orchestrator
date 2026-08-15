@@ -1,78 +1,78 @@
-/* tokens.css: Token Monitor's fixed dark palette */
+/* tokens.css – Token Orchestrator site design system */
 :root {
   color-scheme: dark;
 
-  /* shared / non-color */
+  /* Typefaces */
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --r-sm: 10px;
-  --r-md: 12px;
-  --r-lg: 14px;
-  --maxw: min(1040px, calc(100% - 80px));
-  --navw: min(1120px, calc(100% - 48px));
-  --accent-grad: linear-gradient(90deg, var(--accent-from), var(--accent-to));
-  --bg-solid: #14171c;
-  --stage-bg: #07080b;
-  --stage-mid: #11141b;
-  --stage-border: rgba(255,255,255,0.13);
-  --stage-red: rgba(255,95,86,0.18);
-  --stage-blue: rgba(92,125,255,0.30);
-  --hero-text: #ffffff;
-  --hero-muted: rgba(255,255,255,0.68);
-  --hero-soft: rgba(255,255,255,0.52);
-  --hero-eyebrow: rgba(255,255,255,0.62);
-  --hero-fade-from: rgba(7,8,11,0);
-  --hero-primary-bg: #ffffff;
-  --hero-primary-fg: #0b0c10;
-  --hero-secondary-bg: rgba(255,255,255,0.08);
-  --hero-secondary-border: rgba(255,255,255,0.16);
-  --hero-secondary-fg: #ffffff;
-  --nav-bg: rgba(7,8,11,0.72);
-  --nav-border: rgba(255,255,255,0.08);
-  --nav-text: #f4f8ff;
-  --nav-muted: rgba(244,248,255,0.72);
-  --nav-control-bg: rgba(255,255,255,0.08);
-  --nav-control-border: rgba(255,255,255,0.14);
-  --nav-control-hover: rgba(255,255,255,0.14);
-  --widget-bg: rgba(40,44,52,0.42);
-  --widget-bg-strong: rgba(40,44,52,0.5);
-  --widget-border: rgba(232,238,244,0.24);
-  --widget-muted: #bac2cd;
-  --widget-text: #f3fbf7;
-  --widget-shadow: 0 34px 90px rgba(0,0,0,0.52), inset 0 1px 0 rgba(255,255,255,0.13);
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
 
-  /* DARK palette (default + no-preference) */
-  --bg: #14171c;
-  --chrome: #14171c;
-  --bg-glow: radial-gradient(circle at 82% -10%, rgba(42,51,64,0.9), transparent 60%);
-  --surface: rgba(255,255,255,0.05);
-  --surface-2: rgba(255,255,255,0.08);
-  --surface-border: rgba(255,255,255,0.10);
-  --text: #eaf2ff;
-  --text-strong: #f4f8ff;
-  --muted: #9aa7b8;
-  --accent: #5b9dff;
-  --accent-from: #22d3ee;
-  --accent-to: #5b9dff;
-  --link: #7fb0ff;
-  --warn: #f59e0b;
-  --warn-text: #fbbf24;
-  --danger: #ef4444;
-  --success: #34d399;
-  --meter-track: rgba(255,255,255,0.12);
-  --shadow: 0 14px 34px rgba(0,0,0,0.22);
-  --accent-ink: #07111f;
-  --btn-primary-bg: #ffffff;
-  --btn-primary-fg: #14171c;
-  --btn-secondary-bg: transparent;
-  --btn-secondary-border: rgba(255,255,255,0.25);
-  --btn-secondary-fg: #eaf2ff;
-  --on-strong: #14171c; /* text on an ink/light pill (solid; never a gradient) */
+  /* Layout */
+  --shell: min(1080px, calc(100% - 64px));
+  --nav-shell: min(1120px, calc(100% - 40px));
+  --r-sm:  8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+
+  /* Background layers */
+  --bg:          #0c0f16;
+  --bg-mid:      #11151e;
+  --surface:     #141820;
+  --surface-2:   #1a2030;
+  --surface-3:   #1f2638;
+
+  /* Borders */
+  --border:        rgba(255,255,255,0.07);
+  --border-mid:    rgba(255,255,255,0.12);
+  --border-strong: rgba(255,255,255,0.20);
+
+  /* Text */
+  --text:        #c9d6e8;
+  --text-strong: #e8f0fb;
+  --text-muted:  #6b7a90;
+  --text-dim:    #4a5568;
+
+  /* Accent – cool technical blue */
+  --accent:       #3d9fff;
+  --accent-2:     #22d3ee;
+  --accent-dim:   rgba(61,159,255,0.10);
+  --accent-glow:  rgba(61,159,255,0.22);
+
+  /* Semantic */
+  --green:  #34d399;
+  --amber:  #fbbf24;
+  --red:    #f87171;
+
+  /* Buttons */
+  --btn-primary-bg:   #3d9fff;
+  --btn-primary-fg:   #040810;
+  --btn-secondary-bg: rgba(255,255,255,0.06);
+  --btn-secondary-border: rgba(255,255,255,0.18);
+  --btn-secondary-fg: var(--text-strong);
+
+  /* Code */
+  --code-bg:    #080b12;
+  --code-text:  #93c5fd;
+  --code-key:   #a78bfa;
+  --code-str:   #86efac;
+  --code-num:   #fbbf24;
+  --code-cmt:   #4b5563;
+
+  /* Nav */
+  --nav-bg:       rgba(10,13,20,0.80);
+  --nav-border:   rgba(255,255,255,0.09);
+  --nav-text:     #dde8f8;
+  --nav-muted:    rgba(200,214,240,0.68);
+
+  /* Widget/shadow */
+  --shadow-sm:  0 4px 12px rgba(0,0,0,0.32);
+  --shadow-md:  0 12px 36px rgba(0,0,0,0.48);
+  --shadow-lg:  0 24px 72px rgba(0,0,0,0.64);
+  --shadow-screenshot: 0 32px 96px rgba(0,0,0,0.72), 0 0 0 1px rgba(255,255,255,0.07);
 }
 
-@media (max-width: 680px) {
+@media (max-width: 640px) {
   :root {
-    --maxw: min(980px, calc(100% - 32px));
-    --navw: min(1080px, calc(100% - 20px));
+    --shell: min(980px, calc(100% - 32px));
+    --nav-shell: min(980px, calc(100% - 24px));
   }
 }
