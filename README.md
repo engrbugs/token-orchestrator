@@ -1,16 +1,29 @@
+<p align="center">
+  <img src="assets/banner.png" alt="Token Orchestrator — Unified AI Usage & Rate Limits Orchestrator" width="100%">
+</p>
+
+<p align="center">
+  <a href="https://engrbugs.github.io/token-orchestrator/"><img src="https://img.shields.io/badge/preview-engrbugs.github.io%2Ftoken--orchestrator-3d9fff?style=flat-square" alt="Preview Site"></a>
+  <a href="https://github.com/engrbugs/token-orchestrator/releases/latest"><img src="https://img.shields.io/badge/release-v0.39.0-22d3ee?style=flat-square" alt="Release"></a>
+  <a href="https://github.com/engrbugs/token-orchestrator/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-34d399?style=flat-square" alt="License"></a>
+  <a href="#supported-coverage"><img src="https://img.shields.io/badge/clients-21%20tracked-a78bfa?style=flat-square" alt="Clients"></a>
+  <a href="#supported-coverage"><img src="https://img.shields.io/badge/limits-19%20providers-fbbf24?style=flat-square" alt="Limits"></a>
+  <img src="https://img.shields.io/badge/node-%3E%3D22.13.0-f87171?style=flat-square" alt="Node version">
+</p>
+
 # Token Orchestrator
 
-> A local-first desktop control center for seeing how your AI coding tools are being used.
+Open-source, local-first control center for tracking real-time tokens, spend, and rate limits across 21+ AI coding tools.
 
-When work is spread across Claude Code, Codex, Cursor, OpenCode, Copilot, and other AI tools, usage lives in different places and limits reset on different schedules. Token Orchestrator brings the useful parts into one quiet desktop surface: usage, cost, sessions, provider limits, account state, and history.
+**Token Orchestrator** brings usage, cost, sessions, provider limits, multi-account quotas, and history into one quiet desktop surface. When work is spread across `Claude Code`, `Codex`, `Cursor`, `OpenCode`, `Antigravity`, `Copilot`, and other AI tools, Token Orchestrator tracks everything on your own machine with zero telemetry and zero cloud lock-in.
 
-It is built for developers who want a quick answer to questions like:
+[Preview interactive showcase, architecture, and live docs at engrbugs.github.io/token-orchestrator →](https://engrbugs.github.io/token-orchestrator/)
 
-- How much have I used today?
-- Which tool or model is driving the cost?
-- Which account or quota is closest to its limit?
-- What did I work on recently?
-- Can I keep the data on my own machine?
+- **21+ Tracked Coding Clients** — automatic session log discovery with [tokscale](https://www.npmjs.com/package/tokscale)
+- **19+ Live Limits & Quotas** — 5-hour rolling windows, daily resets, credit balances, and multi-account Antigravity & Codex switching
+- **100% Local-First & Private** — filesystem `0600` credentials, zero prompt logging, and no external tracking
+- **Flexible Presentation Modes** — full desktop widget, OS system tray menu, and floating HUD bubble
+- **3 Deployment Topologies** — standalone local desktop app, headless collector agent (`npm run agent`), or self-hosted Node hub (`npm run hub`)
 
 <table>
   <tr>
