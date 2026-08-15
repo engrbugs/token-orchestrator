@@ -11,6 +11,10 @@
   <img src="https://img.shields.io/badge/node-%3E%3D22.13.0-f87171?style=flat-square" alt="Node version">
 </p>
 
+<p align="center">
+  <img src="assets/icon.png" alt="Token Orchestrator Icon" width="64" height="64">
+</p>
+
 # Token Orchestrator
 
 Open-source, local-first control center for tracking real-time tokens, spend, and rate limits across 21+ AI coding tools.
