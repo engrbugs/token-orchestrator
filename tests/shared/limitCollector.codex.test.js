@@ -169,11 +169,13 @@ test('Codex provider reads quota windows from alternate rate limit ids', () => {
 
   assert.equal(provider.status, 'ok');
   assert.deepEqual(provider.windows.map((window) => window.kind), ['session', 'weekly']);
+  assert.equal(provider.windows[0].label, '');
+  assert.equal(provider.windows[1].label, '');
   assert.equal(provider.windows[0].remainingPercent, 90);
   assert.equal(provider.windows[1].remainingPercent, 75);
 });
 
-test('Codex provider does not guess between conflicting alternate rate limit ids', () => {
+test('Codex provider keeps distinct conflicting alternate weekly pools', () => {
   const snapshots = {
     'gpt-5.4': {
       primary: {
@@ -213,8 +215,50 @@ test('Codex provider does not guess between conflicting alternate rate limit ids
     });
 
     assert.equal(provider.status, 'ok');
-    assert.deepEqual(provider.windows, []);
+    assert.deepEqual(provider.windows.map((window) => window.kind), ['weekly', 'weekly']);
+    assert.deepEqual(provider.windows.map((window) => window.label), ['gpt-5.4', 'gpt-5.4-mini']);
+    assert.equal(provider.windows[0].remainingPercent, 100);
+    assert.equal(provider.windows[1].remainingPercent, 0);
   }
+});
+
+test('Codex provider gives an additional Spark weekly pool its Web UI label', () => {
+  const provider = mapCodexRateLimitsToProvider({
+    rateLimits: {
+      primary: {
+        usedPercent: 10,
+        resetsAt: '2026-06-01T05:00:00Z',
+        windowDurationMins: 300
+      }
+    },
+    rateLimitsByLimitId: {
+      codex_bengalfox: {
+        secondary: {
+          usedPercent: 25,
+          resetsAt: '2026-06-07T00:00:00Z',
+          windowDurationMins: 10080
+        }
+      }
+    }
+  });
+
+  assert.equal(provider.windows[0].label, '');
+  assert.equal(provider.windows[1].label, 'GPT-5.3-Codex-Spark');
+});
+
+test('Codex provider does not synthesize a Spark weekly pool when it is absent', () => {
+  const provider = mapCodexRateLimitsToProvider({
+    rateLimits: {
+      secondary: {
+        usedPercent: 25,
+        resetsAt: '2026-06-07T00:00:00Z',
+        windowDurationMins: 10080
+      }
+    }
+  });
+
+  assert.deepEqual(provider.windows.map((window) => window.label), ['']);
+  assert.equal(provider.windows.some((window) => window.label === 'GPT-5.3-Codex-Spark'), false);
 });
 
 test('Codex provider keeps agreed alternate windows without inheriting conflicting metadata', () => {

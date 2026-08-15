@@ -824,8 +824,16 @@ test('Codex renders manual reset credits below session and weekly windows', () =
   const renderLimits = functionBody(app, 'renderLimits', 'serviceStatusLabel');
 
   assert.match(renderProviderWindows, /provider\.provider === 'codex'/);
-  assert.match(renderProviderWindows, /if \(!weekly\) sessionNode\.classList\.add\('limit-window-wide'\);/);
-  assert.match(renderProviderWindows, /if \(!session\) weeklyNode\.classList\.add\('limit-window-wide'\);/);
+  assert.match(renderProviderWindows, /const weeklyWindows = windowsForKind\(provider, 'weekly'\);/);
+  assert.match(renderProviderWindows, /const hasMultipleWeekly = weeklyWindows\.length > 1;/);
+  assert.match(renderProviderWindows, /if \(!weekly \|\| hasMultipleWeekly\) sessionNode\.classList\.add\('limit-window-wide'\);/);
+  assert.match(renderProviderWindows, /if \(!session \|\| hasMultipleWeekly\) weeklyNode\.classList\.add\('limit-window-wide'\);/);
+  assert.match(renderProviderWindows, /const additionalWeekly = weeklyWindows\.slice\(1\);/);
+  assert.match(renderProviderWindows, /for \(const extra of additionalWeekly\) \{/);
+  assert.match(renderProviderWindows, /const label = extra\.label \|\| 'Extra weekly';/);
+  assert.match(renderProviderWindows, /const extraNode = limitWindowNode\(label, extra, color, 0\.68\);/);
+  assert.match(renderProviderWindows, /extraNode\.classList\.add\('limit-window-wide'\);/);
+  assert.match(renderProviderWindows, /windows\.append\(extraNode\);/);
   assert.match(renderProviderWindows, /const resetNode = codexResetCreditsNode\(provider\.resetCredits\);/);
   assert.doesNotMatch(renderProviderWindows, /limitWindowNode\('Reset credits'/);
   assert.match(resetCreditsValue, /if \(count <= 0\) return '';/);

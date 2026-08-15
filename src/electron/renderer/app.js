@@ -3027,16 +3027,25 @@ function renderProviderWindows(provider, color) {
   windows.className = 'limit-windows';
   if (provider.provider === 'codex') {
     const session = windowForKind(provider, 'session');
-    const weekly = windowForKind(provider, 'weekly');
+    const weeklyWindows = windowsForKind(provider, 'weekly');
+    const weekly = weeklyWindows[0] || null;
+    const additionalWeekly = weeklyWindows.slice(1);
+    const hasMultipleWeekly = weeklyWindows.length > 1;
     if (session) {
       const sessionNode = limitWindowNode(session.label || 'Session', session, color, 0.95);
-      if (!weekly) sessionNode.classList.add('limit-window-wide');
+      if (!weekly || hasMultipleWeekly) sessionNode.classList.add('limit-window-wide');
       windows.append(sessionNode);
     }
     if (weekly) {
       const weeklyNode = limitWindowNode(weekly.label || 'Weekly', weekly, color, 0.68);
-      if (!session) weeklyNode.classList.add('limit-window-wide');
+      if (!session || hasMultipleWeekly) weeklyNode.classList.add('limit-window-wide');
       windows.append(weeklyNode);
+      for (const extra of additionalWeekly) {
+        const label = extra.label || 'Extra weekly';
+        const extraNode = limitWindowNode(label, extra, color, 0.68);
+        extraNode.classList.add('limit-window-wide');
+        windows.append(extraNode);
+      }
     }
     const resetNode = codexResetCreditsNode(provider.resetCredits);
     if (resetNode) windows.append(resetNode);
@@ -4489,6 +4498,10 @@ function homeLimitWindowLabel(window, providerId = '', visibleWindows = []) {
     const label = String(window?.label || '').trim();
     if (label) return label;
   }
+  if (providerId === 'codex') {
+    const label = String(window?.label || '').trim();
+    if (label) return label;
+  }
   const key = {
     session: 'home.limit.session',
     weekly: 'home.limit.weekly',
@@ -4522,6 +4535,9 @@ function renderHomeLimitModule() {
     account.append(mark, name);
     const windows = document.createElement('div');
     windows.className = 'home-limit-windows';
+    const codexWeeklyCount = row.providerId === 'codex'
+      ? row.windows.filter((window) => window.kind === 'weekly').length
+      : 0;
     if (row.windows.length === 0 && row.statusLabel) {
       const metric = document.createElement('div');
       metric.className = 'home-limit-window';
@@ -4540,6 +4556,7 @@ function renderHomeLimitModule() {
     for (const window of row.windows) {
       const metric = document.createElement('div');
       metric.className = 'home-limit-window';
+      if (codexWeeklyCount > 1 && window.kind === 'session') metric.classList.add('home-limit-window-wide');
       const line = document.createElement('div');
       line.className = 'home-limit-window-line';
       const label = document.createElement('span');

@@ -2009,6 +2009,53 @@ function codexRateLimitWindowSignature(snapshot) {
   }));
 }
 
+function codexWeeklyWindowFromSnapshot(snapshot) {
+  const secondary = snapshot?.secondary;
+  const primary = snapshot?.primary;
+  if (secondary && codexWindowKind('secondary', secondary) === 'weekly') return secondary;
+  if (primary && codexWindowKind('primary', primary) === 'weekly') return primary;
+  return null;
+}
+
+function codexRateWindowSignature(window) {
+  if (!window) return '';
+  return JSON.stringify([
+    Number(window.usedPercent ?? window.used_percent ?? 0),
+    String(window.resetsAt || window.resets_at || ''),
+    Number(window.windowDurationMins || window.window_duration_mins || 0)
+  ]);
+}
+
+function codexWeeklyPoolLabel(limitId) {
+  const id = String(limitId || '').trim();
+  if (id === 'codex_bengalfox') return 'GPT-5.3-Codex-Spark';
+  return id;
+}
+
+function collectDistinctCodexWeeklyAlternates(rateLimitsById, canonicalWeekly = null) {
+  const canonicalSignature = codexRateWindowSignature(canonicalWeekly);
+  const candidates = Object.entries(rateLimitsById)
+    .filter(([id, snapshot]) => id !== 'codex' && hasCodexRateLimitWindows(snapshot))
+    .map(([id, snapshot]) => ({
+      id: String(id),
+      window: codexWeeklyWindowFromSnapshot(snapshot)
+    }))
+    .filter((entry) => entry.window)
+    .sort((left, right) => left.id.localeCompare(right.id, 'en'));
+
+  const seen = new Set();
+  const additional = [];
+  for (const entry of candidates) {
+    const signature = codexRateWindowSignature(entry.window);
+    if (canonicalSignature && signature === canonicalSignature) continue;
+    if (seen.has(signature)) continue;
+    seen.add(signature);
+    additional.push({ id: entry.id, label: codexWeeklyPoolLabel(entry.id), window: entry.window, signature });
+  }
+
+  return additional;
+}
+
 function codexAlternatePlanType(snapshot) {
   const value = snapshot?.planType ?? snapshot?.plan_type;
   const normalized = String(value ?? '').trim();
@@ -2284,6 +2331,21 @@ function mapCodexRateLimitsToProvider(payload, meta = {}) {
       usedPercent: window.usedPercent ?? window.used_percent,
       resetsAt: window.resetsAt ?? window.resets_at,
       windowMinutes: window.windowDurationMins ?? window.window_duration_mins
+    });
+  }
+  const canonicalWeekly = codexWindowKind('secondary', rateLimits.secondary) === 'weekly'
+    ? rateLimits.secondary
+    : codexWindowKind('primary', rateLimits.primary) === 'weekly'
+      ? rateLimits.primary
+      : null;
+  const alternateWeekly = collectDistinctCodexWeeklyAlternates(codexRateLimitsById(payload), canonicalWeekly);
+  for (const alternate of alternateWeekly) {
+    windows.push({
+      kind: 'weekly',
+      usedPercent: alternate.window.usedPercent ?? alternate.window.used_percent,
+      resetsAt: alternate.window.resetsAt ?? alternate.window.resets_at,
+      windowMinutes: alternate.window.windowDurationMins ?? alternate.window.window_duration_mins,
+      label: alternate.label
     });
   }
   return normalizeLimitProvider({
