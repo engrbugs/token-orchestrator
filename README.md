@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.png" alt="Token Orchestrator — Unified AI Usage & Rate Limits Orchestrator" width="100%">
+  <a href="#token-orchestrator"><img src="assets/banner.png" alt="Token Orchestrator — Unified AI Usage & Rate Limits Orchestrator" width="100%"></a>
 </p>
 
 <p align="center">
